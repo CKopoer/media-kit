@@ -103,13 +103,63 @@ aggregate `media_kit_libs_video` 保留当前官方结构，仅 Windows 约束�
 
 ## Android Surface 移植
 
-视频层保留官方跨平台 API，兼容采用视频 fork 的 `SurfaceTextureEntry` 与源生命周期流程：每次 on_load 创建新 Surface，on_unload 同步 `vo=null`/`wid=0` 后释放 JNI 与 Java 引用。视频尺寸更新经互斥锁及 generation 校验，不发送隐式 seek，不再使用 SurfaceProducer wid 回调与固定延迟回收。`force-window=no` 避免 idle 窗口尺寸；提前 attach 和有效参数后 attach 两种配置均保留。
+视频层保留官方跨平台 API，兼容采用视频 fork 保留的 `SurfaceTextureEntry` 与源生命周期流程。这套 Java SurfaceTexture 方案在共同祖先中已经存在，并非视频 fork 新增的 Java 修改；本次是在当前官方结构中恢复并加强其生命周期：每次 on_load 创建新 Surface，on_unload 同步 `vo=null`/`wid=0` 后释放 JNI 与 Java 引用。视频尺寸更新经互斥锁及 generation 校验，不发送隐式 seek，不再使用 SurfaceProducer wid 回调与固定延迟回收。`force-window=no` 避免 idle 窗口尺寸；提前 attach 和有效参数后 attach 两种配置均保留。
 
 每次源加载的输出 readiness 独立；创建、尺寸、属性失败会使其失败，等待者收到原异常。它确认尺寸已提交，沿用参数兜底语义，不证明真实首帧像素已经显示。dispose 幂等且 finally 按身份移除 Dart 缓存/释放 notifier；若 mpv detach 本身失败，则保留仍可能被 VO 引用的原生 Surface，不能越过屏障释放。
 
 17 项生命周期测试覆盖顺序、同尺寸跨源、旧异步参数、重复尺寸、无 seek、释放幂等、错误 readiness 与失败清理。整个 media_kit_video Dart analyze 通过；Java 使用真实 Flutter Android-arm64、Android 36 与 annotation JAR 编译通过。尚未据此认定 Android 实机、硬解或性能通过。
 
 Windows 源码内容未变，`.gitattributes` 固定 Windows 源文件 LF，保证 Git checkout 后下游七文件 SHA-256 校验仍可复现。Windows/macOS/iOS/Web 视频后端未随 Android 移植覆盖。
+
+## 视频分支功能与 33 路径矩阵
+
+视频 fork 同样以 `e41e50c8cfb370e69612b205dcfd9f3ca80690f5` 为共同祖先，到 `fd8421d21eade4d6d12de137fa7df902fec20292` 的真实增量为 **33 个路径，1112 行新增、1720 行删除**。直接比较当前 main 与旧 fork 会混入官方后续修复，不将这些差异当成 fork 新增功能。
+
+除 Android 生命周期外，兼容移植两项共享 UI 修复：`Video.didUpdateWidget` 允许 width、height、aspectRatio、controls 等明确变回 null，而未变化的 widget 属性继续保留 `VideoState.update` 的运行时值；`SubtitleView` 在配置 padding 确实变化时更新布局，其他配置变化不覆盖控件通过 `setPadding` 设置的临时避让。保留现有 FocusNode、TextScaler、List<String> 字幕和公共控制器 API，不搬入 fork 的业务交互。
+
+Linux 的 EGLImage 共享、独立 EGL context、正确上下文释放和平台线程通知已被官方完整覆盖；当前 main 还加入 `MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME=0`，防止渲染线程等待显示时刻。Windows 自动 adapter 与 SetSize 命名也已覆盖；下游 BiliSail 继续使用自己的 ANGLE device/GPU 队列、视口和释放补丁。视频 fork 最后一次提交的 Windows 26H2 SDK helper 修复（用 GetWindowRect 保存全屏前窗口区域）**未采用**：BiliSail 通过 window_manager 全屏，使用 NoVideoControls，不调用 SDK 默认全屏 helper；若今后启用该 helper，需要单独适配与平台验证。
+
+以下路径均相对 `media_kit_video/`，逐项覆盖共同祖先到视频 fork 的全部 33 个路径：
+
+| 路径 | 处理与功能边界 |
+| --- | --- |
+| `example/pubspec.yaml` | 保留官方 workspace 与 SDK 约束，不照搬旧示例的依赖布局。 |
+| `lib/media_kit_video_controls/src/controls/cupertino.dart` | 不搬无关的未使用 theme helper 删除。 |
+| `lib/media_kit_video_controls/src/controls/material.dart` | 不恢复系统音量/亮度插件；官方已移除这组依赖，下游使用自有控件。 |
+| `lib/media_kit_video_controls/src/controls/material_desktop.dart` | 不照搬 desktop volume 订阅删除，保留官方控件行为。 |
+| `lib/media_kit_video_controls/src/controls/methods/fullscreen.dart` | 主要为格式变动，保留官方全屏 widget 生命周期。 |
+| `lib/src/subtitle/subtitle_view.dart` | 移植配置 padding 更新，保留临时 setPadding；不搬字幕新模型、固定缩放、描边和拖动手势。 |
+| `lib/src/utils/query_decoders.dart` | 保留 decoder 检测与 audio-only 库防护，不采用 fork 删除。 |
+| `lib/src/video/simple_video_texture.dart` | 不新增裸纹理业务入口；未证明减少 widget 包装可改善本项目性能。 |
+| `lib/src/video/video.dart` | 保留条件导出，不删除 Web 或新增 SimpleVideo API。 |
+| `lib/src/video/video_texture.dart` | 移植 nullable 属性清除修复；保留官方 FocusNode、控件、libass 判断；不搬弹幕/手势插槽、缩放镜像、固定 touchSlop、DPR 布局调整和旧 core size stream 耦合。 |
+| `lib/src/video/video_web.dart` | 保留 Web 实现，不采用 fork 删除。 |
+| `lib/src/video_controller/android_video_controller/android_video_controller.dart` | 保留条件导出。 |
+| `lib/src/video_controller/android_video_controller/real.dart` | 兼容移植并加强 Surface load/unload/尺寸流程、错误就绪与释放屏障。 |
+| `lib/src/video_controller/android_video_controller/stub.dart` | 保留 Web 编译 stub。 |
+| `lib/src/video_controller/native_video_controller/native_video_controller.dart` | 保留条件导出。 |
+| `lib/src/video_controller/native_video_controller/real.dart` | 保留官方 native API、初始化与释放，不依赖 fork 重写后的 Player/FFI 结构。 |
+| `lib/src/video_controller/native_video_controller/stub.dart` | 保留 Web 编译 stub。 |
+| `lib/src/video_controller/platform_video_controller.dart` | 保留原有 scale、copyWith 与平台契约，不采用删能力的静态 factory 改写。 |
+| `lib/src/video_controller/video_controller.dart` | 保留公开包装器及 platform/notifier，不改 typedef。 |
+| `lib/src/video_controller/web_video_controller/real.dart` | 保留 Web 控制器，不采用 fork 删除。 |
+| `lib/src/video_controller/web_video_controller/stub.dart` | 保留 native 编译 stub。 |
+| `lib/src/video_controller/web_video_controller/web_video_controller.dart` | 保留条件导出。 |
+| `lib/src/video_view_parameters.dart` | 保留 FocusNode 和现有 API；Object.hash 风格变动不照搬。nullable widget 更新在 Video 中修复，不改变 copyWith 兼容语义。 |
+| `linux/include/media_kit_video/video_output.h` | 官方已覆盖 EGL display/context/surface 接口。 |
+| `linux/media_kit_video_plugin.cc` | 官方已覆盖平台线程通知。 |
+| `linux/texture_gl.cc` | 官方已覆盖 EGLImage/独立 context；保留后续非阻塞 present 修复。 |
+| `linux/video_output.cc` | 官方已覆盖 Wayland/EGL 创建与释放。 |
+| `pubspec.yaml` | 保留官方平台依赖、workspace 与 SDK 约束；增加 flutter_test 验证移植行为。 |
+| `windows/angle_surface_manager.cc` | 自动 adapter 选择与 SetSize 已被官方覆盖；不替换下游 ANGLE/GPU 队列补丁。 |
+| `windows/angle_surface_manager.h` | 官方已覆盖接口命名与 adapter 成员调整。 |
+| `windows/utils.cc` | 自动 adapter 版本检测已覆盖；26H2 SDK helper 修复未采用，当前下游不走该路径。 |
+| `windows/utils.h` | 官方已覆盖 Windows 版本查询声明。 |
+| `windows/video_output.cc` | 官方已覆盖 SetSize 调用；不覆盖下游视口、渲染队列和释放补丁。 |
+
+共同祖先到此视频 fork 没有 iOS、macOS 或 common Darwin 原生增量。标题为 `opt: screenshot` 的视频提交实际仅调整尺寸空值处理与音量依赖，不将提交标题当作截图性能证据。
+
+共享 UI 使用 fake Player/VideoController 的四项 widget 测试验证：可空配置清除、未变属性保留运行时更新、字幕 padding 配置更新、其他配置不覆盖临时避让；不加载 libmpv 或访问网络。与 17 项 Android 生命周期测试合计 21 项，不作为三端实机与性能验收。
 
 ## 核心验证结果
 

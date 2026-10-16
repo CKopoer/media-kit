@@ -64,6 +64,16 @@ class SubtitleViewState extends State<SubtitleView> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(SubtitleView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.configuration.padding != oldWidget.configuration.padding) {
+      // Apply explicit configuration updates while preserving the temporary
+      // padding set by controls when an unrelated widget property changes.
+      padding = widget.configuration.padding;
+    }
+  }
+
   /// Sets the padding to be used for the subtitles.
   ///
   /// The [duration] argument may be specified to set the duration of the animation.

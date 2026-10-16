@@ -241,7 +241,9 @@ class VideoState extends State<Video> with WidgetsBindingObserver {
 
     final currentParams = videoViewParametersNotifier.value;
 
-    final newParams = currentParams.copyWith(
+    // A changed widget property may intentionally become null. copyWith uses
+    // null to preserve the previous value, so construct the new parameters.
+    final newParams = VideoViewParameters(
       width:
           widget.width != oldWidget.width ? widget.width : currentParams.width,
       height: widget.height != oldWidget.height
