@@ -531,6 +531,14 @@ class PlayerConfiguration {
   /// Default: `true`.
   final bool iosManageAudioSession;
 
+  /// Additional native mpv options set before the player is initialized.
+  ///
+  /// Explicit entries override matching media_kit defaults. Playback lifecycle
+  /// options (`idle`, `pause` and `keep-open`) remain managed by the player.
+  /// VideoController may subsequently configure video output options.
+  /// Ignored by the web backend.
+  final Map<String, String>? options;
+
   /// {@macro player_configuration}
   const PlayerConfiguration({
     this.vo = 'null',
@@ -557,6 +565,7 @@ class PlayerConfiguration {
       'crypto',
     ],
     this.iosManageAudioSession = true,
+    this.options,
   });
 }
 

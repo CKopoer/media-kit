@@ -69,6 +69,12 @@ class Media extends Playable {
   /// Default: `null`.
   final Map<String, String>? httpHeaders;
 
+  /// Native mpv options scoped to this playlist entry. Ignored on web.
+  ///
+  /// Unlike [extras], these values are passed to mpv's `loadfile` command.
+  /// They are not inherited by another [Media] with the same URI.
+  final Map<String, String>? nativeOptions;
+
   /// Start position.
   ///
   /// Default: `null`.
@@ -84,6 +90,7 @@ class Media extends Playable {
     String resource, {
     Map<String, dynamic>? extras,
     Map<String, String>? httpHeaders,
+    Map<String, String>? nativeOptions,
     Duration? start,
     Duration? end,
   }) {
@@ -91,6 +98,7 @@ class Media extends Playable {
       resource,
       extras: extras,
       httpHeaders: httpHeaders,
+      nativeOptions: nativeOptions,
       start: start,
       end: end,
       memory: false,
@@ -101,10 +109,14 @@ class Media extends Playable {
     String resource, {
     Map<String, dynamic>? extras,
     Map<String, String>? httpHeaders,
+    Map<String, String>? nativeOptions,
     this.start,
     this.end,
     required bool memory,
   })  : uri = normalizeURI(resource),
+        nativeOptions = nativeOptions == null
+            ? null
+            : Map<String, String>.unmodifiable(nativeOptions),
         extras = extras ?? cache[normalizeURI(resource)]?.extras,
         httpHeaders =
             httpHeaders ?? cache[normalizeURI(resource)]?.httpHeaders {
@@ -169,6 +181,7 @@ class Media extends Playable {
     String? uri,
     Map<String, dynamic>? extras,
     Map<String, String>? httpHeaders,
+    Map<String, String>? nativeOptions,
     Duration? start,
     Duration? end,
   }) {
@@ -176,6 +189,7 @@ class Media extends Playable {
       uri ?? this.uri,
       extras: extras ?? this.extras,
       httpHeaders: httpHeaders ?? this.httpHeaders,
+      nativeOptions: nativeOptions ?? this.nativeOptions,
       start: start ?? this.start,
       end: end ?? this.end,
     );

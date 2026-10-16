@@ -1,0 +1,3 @@
+# Keep the verified Windows sources byte-identical across Git checkouts.
+# BiliSail applies its rendering/lifecycle patch only after SHA-256 validation.
+media_kit_video/windows/** text eol=lf

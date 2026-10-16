@@ -1,0 +1,40 @@
+name: MPV
+description: Generated mpv client bindings. See headers/README.md for provenance.
+output: ../../lib/generated/libmpv/bindings.dart
+headers:
+  entry-points:
+    - ../../headers/client.h
+exclude-all-by-default: true
+enums:
+  include:
+    - 'mpv_.*'
+  as-int:
+    include:
+      - 'mpv_.*'
+functions:
+  include:
+    - 'mpv_.*'
+  leaf:
+    include:
+      - mpv_client_api_version
+      - mpv_client_id
+      - mpv_client_name
+      - mpv_error_string
+      - mpv_event_name
+      - mpv_get_time_ns
+      - mpv_get_time_us
+structs:
+  include:
+    - 'mpv_.*'
+unions:
+  include:
+    - 'mpv_.*'
+macros:
+  include:
+    - 'MPV_.*'
+type-map:
+  native-types:
+    char:
+      lib: ffi
+      c-type: Int8
+      dart-type: int

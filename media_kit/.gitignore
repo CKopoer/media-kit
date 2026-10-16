@@ -8,6 +8,8 @@ build/
 # libMPV headers.
 
 headers/*
+!headers/client.h
+!headers/README.md
 
 # Others
 .vscode

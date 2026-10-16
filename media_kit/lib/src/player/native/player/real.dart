@@ -30,6 +30,7 @@ import 'package:media_kit/src/models/video_params.dart';
 import 'package:media_kit/src/player/native/core/fallback_bitrate_handler.dart';
 import 'package:media_kit/src/player/native/core/initializer.dart';
 import 'package:media_kit/src/player/native/core/native_library.dart';
+import 'package:media_kit/src/player/native/utils/loadfile.dart';
 import 'package:media_kit/src/player/native/utils/android_asset_loader.dart';
 import 'package:media_kit/src/player/native/utils/android_helper.dart';
 import 'package:media_kit/src/player/native/utils/isolates.dart';
@@ -187,18 +188,15 @@ class NativePlayer extends PlatformPlayer {
       // Enter paused state.
       await _setPropertyFlag('pause', true);
 
-      if (playlist.any((media) => media.uri.startsWith('fd://'))) {
+      if (playlist.any((media) =>
+          media.uri.startsWith('fd://') ||
+          (media.nativeOptions?.isNotEmpty ?? false))) {
         // The fd:// scheme is used to reference content:// URIs on Android.
         // The loadlist command does not support this by default, yielding "Refusing to load potentially unsafe URL from a playlist."
+        // Per-entry native options also require individual loadfile commands.
         // So, we fallback to loading each file individually.
         for (int i = 0; i < playlist.length; i++) {
-          await _command(
-            [
-              'loadfile',
-              _sanitizeUri(playlist[i].uri),
-              'append',
-            ],
-          );
+          await _loadFile(playlist[i]);
         }
       } else {
         final file = await TempFile.create();
@@ -483,7 +481,7 @@ class NativePlayer extends PlatformPlayer {
       }
       // ---------------------------------------------
 
-      await _command(['loadfile', _sanitizeUri(media.uri), 'append']);
+      await _loadFile(media);
     }
 
     if (synchronized) {
@@ -2194,7 +2192,8 @@ class NativePlayer extends PlatformPlayer {
         // --------------------------------------------------
         for (final hook in onLoadHooks) {
           try {
-            await hook.call();
+            final result = hook.call();
+            if (result is Future<void>) await result;
           } catch (exception, stacktrace) {
             print(exception);
             print(stacktrace);
@@ -2321,7 +2320,8 @@ class NativePlayer extends PlatformPlayer {
         // --------------------------------------------------
         for (final hook in onUnloadHooks) {
           try {
-            await hook.call();
+            final result = hook.call();
+            if (result is Future<void>) await result;
           } catch (exception, stacktrace) {
             print(exception);
             print(stacktrace);
@@ -2428,6 +2428,11 @@ class NativePlayer extends PlatformPlayer {
         }
       }
 
+      options.addAll(configuration.options ?? const {});
+      // These options are required for initialization and playback state
+      // synchronization. They cannot be disabled by a custom option map.
+      options.addAll({'idle': 'yes', 'pause': 'yes', 'keep-open': 'yes'});
+
       ctx = await Initializer(mpv).create(
         _handler,
         options: options,
@@ -2506,6 +2511,12 @@ class NativePlayer extends PlatformPlayer {
           'secondary-sub-visibility': configuration.libass ? 'yes' : 'no',
         },
       );
+
+      properties.removeWhere((key, _) =>
+          configuration.options?.containsKey(key) == true &&
+          key != 'idle' &&
+          key != 'pause' &&
+          key != 'keep-open');
 
       if (test) {
         properties['vo'] = 'null';
@@ -2606,6 +2617,12 @@ class NativePlayer extends PlatformPlayer {
   final Map<int, Completer<int>> _setPropertyRequests = {};
   final Map<int, Completer<int>> _commandRequests = {};
 
+  Future<void> _loadFile(Media media) => _command(loadfileCommand(
+        _sanitizeUri(media.uri),
+        apiVersion: mpv.mpv_client_api_version(),
+        options: media.nativeOptions,
+      ));
+
   Future<void> _setProperty(String name, int format, Pointer<Void> data) async {
     final namePtr = name.toNativeUtf8();
     try {
@@ -2687,7 +2704,7 @@ class NativePlayer extends PlatformPlayer {
 
   Future<void> _command(List<String> args) async {
     final pointers = args.map<Pointer<Utf8>>((e) => e.toNativeUtf8()).toList();
-    final arr = calloc<Pointer<Utf8>>(128);
+    final arr = calloc<Pointer<Utf8>>(args.length + 1);
     try {
       for (int i = 0; i < args.length; i++) {
         (arr + i).value = pointers[i];
@@ -2697,7 +2714,8 @@ class NativePlayer extends PlatformPlayer {
         final requestNumber = _asyncRequestNumber++;
         final completer = _commandRequests[requestNumber] = Completer<int>();
         final immediate = mpv.mpv_command_async(ctx, requestNumber, arr.cast());
-        final text = '_command(${args.join(', ')})';
+        // Arguments can include signed URLs, headers and per-file options.
+        final text = '_command(${args.isEmpty ? '' : args.first})';
         if (immediate < 0) {
           // Sending failed, so no reply event will remove this request.
           _commandRequests.remove(requestNumber);
@@ -2780,13 +2798,13 @@ class NativePlayer extends PlatformPlayer {
       HashMap<int, Future<void> Function(Pointer<generated.mpv_event>)>();
 
   /// The methods which must execute synchronously before playback of a source can begin.
-  final List<Future<void> Function()> onLoadHooks = [];
+  final List<FutureOr<void> Function()> onLoadHooks = [];
 
   /// The methods which must execute synchronously before playback of a source can end.
-  final List<Future<void> Function()> onUnloadHooks = [];
+  final List<FutureOr<void> Function()> onUnloadHooks = [];
 
   /// Synchronization & mutual exclusion between methods of this class.
-  static final Lock lock = Lock();
+  final Lock lock = Lock();
 
   /// [HashMap] for retrieving previously fetched audio-bitrate(s).
   static final HashMap<String, double> audioBitrateCache =
@@ -2833,7 +2851,7 @@ Uint8List? _screenshot(_ScreenshotData data) {
   final pointers = args.map<Pointer<Utf8>>((e) {
     return e.toNativeUtf8();
   }).toList();
-  final Pointer<Pointer<Utf8>> arr = calloc.allocate(args.join().length);
+  final arr = calloc<Pointer<Utf8>>(args.length + 1);
   for (int i = 0; i < args.length; i++) {
     arr[i] = pointers[i];
   }
