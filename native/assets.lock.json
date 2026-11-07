@@ -2,15 +2,17 @@
   "schemaVersion": 1,
   "release": "native-2026-11-07",
   "sourceRepository": "https://github.com/CKopoer/mpv",
-  "windowsSource": "88eb9f2e73945d8bc9c133a2f67babaa9af34680",
+  "windowsSource": "afd6da8843a07f463ba4c736a2ea636b1a92e23e",
   "androidSource": "9fda3e12a57a7b3ebd627a3c1b37561709d4ffee",
   "assets": [
     {
-      "name": "mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z",
-      "origin": "https://github.com/zhongfly/mpv-winbuild/releases/download/2026-10-12-88eb9f2e73/mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z",
-      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z",
-      "sha256": "d1a3f57dfb3c7f07e5456e32e9ecc9e406f6457f2560ff5801c9b37a8036f507",
-      "bootstrapCache": "build/windows/x64/mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z"
+      "name": "bilisail-libmpv-windows-x64-afd6da8843.zip",
+      "origin": "https://github.com/CKopoer/media-kit/releases/download/native-windows-hwdec-edges-2026-11-07/bilisail-libmpv-windows-x64-afd6da8843.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-windows-hwdec-edges-2026-11-07/bilisail-libmpv-windows-x64-afd6da8843.zip",
+      "sha256": "6739acd7529400cc877ea84e417714bf043769ef088cd1b248d3de2467417ced",
+      "build": "https://github.com/CKopoer/mpv/actions/runs/42387266918",
+      "ciArchiveSha256": "90ba696e356385789012af652b7f7c51d4b3de8ec0736943767a73e706b612ce",
+      "bootstrapCache": "build/windows/x64/bilisail-libmpv-windows-x64-afd6da8843.zip"
     },
     {
       "name": "ANGLE.7z",
@@ -294,5 +296,7 @@
     }
   ],
   "darwinSource": "f4210f84906c3b00a65fba198c8127b6757b9350",
-  "linuxSource": "41f6a645068483470267271e1d09966ca3b9f413"
+  "linuxSource": "41f6a645068483470267271e1d09966ca3b9f413",
+  "windowsArm64Source": "88eb9f2e73945d8bc9c133a2f67babaa9af34680",
+  "windowsX64Release": "native-windows-hwdec-edges-2026-11-07"
 }

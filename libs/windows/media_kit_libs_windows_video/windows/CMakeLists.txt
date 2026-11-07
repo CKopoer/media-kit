@@ -75,6 +75,14 @@ target_link_libraries(
 )
 
 set(windows_runtime "${LIBMPV_SRC}/libmpv-2.dll")
+set(native_license_dir "$<TARGET_FILE_DIR:${BINARY_NAME}>/data/licenses")
+if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-x64")
+  # Ship the exact rebuilt SDK's licenses and source/configuration records.
+  install(FILES "${LIBMPV_SRC}/LICENSE.LGPL"
+    DESTINATION "${native_license_dir}/mpv" COMPONENT Runtime)
+  install(DIRECTORY "${LIBMPV_SRC}/provenance"
+    DESTINATION "${native_license_dir}/mpv" COMPONENT Runtime)
+endif()
 foreach(file IN LISTS MEDIA_KIT_ANGLE_RUNTIME_FILES)
   list(APPEND windows_runtime "${ANGLE_SRC}/${file}")
 endforeach()

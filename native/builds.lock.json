@@ -10,6 +10,18 @@
     "upstreamBuildCommit": "b4e3ce98826cd4a28f6121b29f56ea203346e6e3"
   },
   "windows": {
+    "repository": "https://github.com/CKopoer/mpv",
+    "commit": "afd6da8843a07f463ba4c736a2ea636b1a92e23e",
+    "workflow": ".github/workflows/bilisail-windows.yml",
+    "run": "https://github.com/CKopoer/mpv/actions/runs/42387266918",
+    "container": "ghcr.io/btbn/ffmpeg-builds/win64-lgpl@sha256:291298c28290ea30b94a224cb2545d1f2df922fe9445d1866036eabbeb246a3f",
+    "ffmpeg": "615b07170e30d79ad5906418ea49f81c3cbd8457",
+    "luajit": "ea9eb7edb5eac4a9d175d74523db34fac0fa5180",
+    "libsixel": "3c9fd6a294b2d0338482f9a5d5772827d82cfa9d",
+    "subrandr": "a41311bb5e382abcc47ef141e2ea1098d22a8d58",
+    "license": "mpv LGPL-2.1-or-later; FFmpeg LGPL-3.0-or-later; dependency licenses apply separately"
+  },
+  "windowsArm64": {
     "repository": "https://github.com/CKopoer/mpv-winbuild",
     "commit": "aa2c65f15129c3d94852cc0fcd719358f3d47aa6",
     "upstreamBuildCommit": "8a39c5134b8e16f104ee56a5d85e36a592ad9477"
