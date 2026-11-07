@@ -285,6 +285,12 @@
       "origin": "https://github.com/yorickreum/angle-libs/releases/download/a96fca8/angle-windows-arm64-a96fca8d5ee2ca61e8de419e38cd577579281c9e.tar.gz",
       "url": "https://github.com/CKopoer/media-kit/releases/download/native-windows-arm64-2026-11-07/angle-windows-arm64-a96fca8d5ee2ca61e8de419e38cd577579281c9e.tar.gz",
       "sha256": "f7f122533644ec0dd1f52f0117b9fa57ceb3f69dff3359579028ff4008f74f69"
+    },
+    {
+      "name": "mingw-w64-clang-aarch64-vulkan-loader-1~1.4.357.0-1-any.pkg.tar.zst",
+      "origin": "https://mirror.msys2.org/mingw/clangarm64/mingw-w64-clang-aarch64-vulkan-loader-1~1.4.357.0-1-any.pkg.tar.zst",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-windows-arm64-2026-11-07/mingw-w64-clang-aarch64-vulkan-loader-1~1.4.357.0-1-any.pkg.tar.zst",
+      "sha256": "1a5e4c82fc568b83b2e2cbb1e9145d61bda15ed6e2d9f6fdfb96e674aaed49b9"
     }
   ],
   "darwinSource": "f4210f84906c3b00a65fba198c8127b6757b9350",

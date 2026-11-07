@@ -78,6 +78,12 @@ set(windows_runtime "${LIBMPV_SRC}/libmpv-2.dll")
 foreach(file IN LISTS MEDIA_KIT_ANGLE_RUNTIME_FILES)
   list(APPEND windows_runtime "${ANGLE_SRC}/${file}")
 endforeach()
+if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-arm64")
+  # This SDK links vulkan-1.dll even when the video renderer uses ANGLE/OpenGL.
+  list(APPEND windows_runtime "${MEDIA_KIT_VULKAN_SDK}/bin/vulkan-1.dll")
+  install(FILES "${MEDIA_KIT_VULKAN_SDK}/share/licenses/vulkan-loader/LICENSE"
+    DESTINATION "data/licenses/vulkan-loader" COMPONENT Runtime)
+endif()
 set(media_kit_libs_windows_video_bundled_libraries ${windows_runtime} PARENT_SCOPE)
 if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-arm64")
   install(FILES "${ANGLE_SRC}/LICENSE" DESTINATION "data/licenses/angle" COMPONENT Runtime)
