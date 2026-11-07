@@ -31,3 +31,7 @@ Windows 的生产下载、预取与安装共用库插件的 `windows/native-asse
 - ANGLE 同设备可直接交付；不同设备保留每个新视频帧一次的 GPU 复制，不宣称完整链路零复制。
 
 MIT 仅覆盖 media-kit 包装源码；mpv、FFmpeg、ANGLE 和各子依赖保持各自许可。发布保留来源、构建材料与许可，镜像不改变许可范围。Windows SDK 保留 LGPL 文本，Android 的逐项许可与原始构建材料见库插件 `NATIVE_LIBRARIES.md`。源码变更和镜像不等于新的性能验收。
+
+## 本轮验证
+
+2026-11-07：核心扩展原生用例 10 项、视频生命周期／配置用例 22 项、核心与视频生产源码静态分析通过。Windows 已通过真实 D3D11/ANGLE 共享／复制、稳定 texture ID／descriptor 生命周期和 9 项释放／队列回归。Linux Ubuntu 24.04 的个人源码构建、动态依赖及 client ABI 检查通过：[run 42329760177](https://github.com/CKopoer/media-kit/actions/runs/42329760177)。Linux 本机图形播放、Flutter 打包和 Apple 设备验收不能由该构建推导。
