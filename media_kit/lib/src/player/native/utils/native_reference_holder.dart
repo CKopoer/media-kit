@@ -12,6 +12,7 @@ import 'package:synchronized/synchronized.dart';
 
 import 'package:media_kit/ffi/src/allocation.dart';
 import 'package:media_kit/src/player/native/utils/temp_file.dart';
+import 'package:media_kit/src/player/native/utils/process_identity.dart';
 import 'package:media_kit/src/values.dart';
 
 /// Callback invoked to notify about the released references.
@@ -123,7 +124,7 @@ class NativeReferenceHolder {
   final File _file = File(
     path.join(
       TempFile.directory,
-      'com.alexmercerind.media_kit.NativeReferenceHolder.$pid',
+      'com.alexmercerind.media_kit.NativeReferenceHolder.${nativeReferenceProcessIdentity()}',
     ),
   );
 
