@@ -1,2 +1,3 @@
 package_windows_sdk.py text eol=lf
-windows-sdk-notices/** text eol=lf
+# Preserve the upstream license text, including its original whitespace.
+windows-sdk-notices/** text eol=lf -whitespace
