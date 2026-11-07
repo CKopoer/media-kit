@@ -25,9 +25,16 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
 
   apply_standard_settings(${PLUGIN_NAME})
 
-  # Check for libmpv & epoxy headers & libraries.
+  # Build and link the same libmpv that the library plugin bundles. Linking a
+  # distro SDK can preload a second libmpv before Dart opens the bundled one.
+  if(NOT MEDIA_KIT_LINUX_MPV OR NOT TARGET media_kit_linux_mpv)
+    message(FATAL_ERROR "media_kit_video requires the matching personal Linux library plugin.")
+  endif()
+  add_dependencies(${PLUGIN_NAME} media_kit_linux_mpv)
+  set_target_properties(${PLUGIN_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN")
+
+  # Check for epoxy headers & libraries.
   find_package(PkgConfig REQUIRED)
-  pkg_check_modules(mpv IMPORTED_TARGET mpv)
   pkg_check_modules(epoxy IMPORTED_TARGET epoxy)
 
   set_target_properties(
@@ -40,13 +47,14 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     FLUTTER_PLUGIN_IMPL
   )
   
-  target_compile_options(${PLUGIN_NAME} PRIVATE "${mpv_CFLAGS_OTHER}")
   target_compile_options(${PLUGIN_NAME} PRIVATE "${epoxy_CFLAGS_OTHER}")
+
+  target_include_directories(${PLUGIN_NAME} PRIVATE
+    "${MEDIA_KIT_LINUX_MPV}/install/include")
 
   target_include_directories(
     ${PLUGIN_NAME} INTERFACE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
-    "${mpv_INCLUDE_DIRS}"
     "${epoxy_INCLUDE_DIRS}"
   )
 
@@ -54,7 +62,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     ${PLUGIN_NAME} PRIVATE
     flutter
     PkgConfig::GTK
-    PkgConfig::mpv
+    "${MEDIA_KIT_LINUX_MPV}/libmpv.so.2"
     PkgConfig::epoxy
   )
 else()

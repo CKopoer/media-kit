@@ -12,7 +12,7 @@ jobs:
       - name: Install native build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson ninja-build pkg-config gcc g++ curl \
+          sudo apt-get install -y meson ninja-build cmake pkg-config gcc g++ curl unzip libgtk-3-dev libepoxy-dev \
             libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev \
             libswresample-dev libswscale-dev libass-dev libplacebo-dev \
             libegl1-mesa-dev libgl-dev libva-dev libvdpau-dev libdrm-dev \
@@ -35,6 +35,25 @@ jobs:
           lib.mpv_destroy.argtypes = [ctypes.c_void_p]
           lib.mpv_destroy(ctx)
           PY
+      - name: Compile and verify the actual Linux video plugin
+        run: |
+          curl --fail --location --retry 3 --max-time 180 \
+            https://storage.googleapis.com/flutter_infra_release/flutter/692136cb6582dbfc5af3fb33c2515a069f2f66d0/linux-x64-debug/linux-x64-flutter-gtk.zip \
+            -o build/flutter-engine.zip
+          echo '2a522fd7d5c12a54165f1e48001fcb331649a24a21083510fe6734699346d7e2  build/flutter-engine.zip' | sha256sum -c -
+          unzip -q build/flutter-engine.zip -d build/flutter-engine
+          mkdir -p build/linux-plugin-smoke
+          ln -s "$PWD/build/native-linux" build/linux-plugin-smoke/media_kit_mpv
+          cmake -S native/linux-plugin-smoke -B build/linux-plugin-smoke -G Ninja \
+            -DFLUTTER_ENGINE_SDK="$PWD/build/flutter-engine" -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/linux-plugin-smoke -j 4
+          cmake --install build/linux-plugin-smoke --prefix "$PWD/build/plugin-bundle"
+          plugin=build/plugin-bundle/lib/libmedia_kit_video_plugin.so
+          readelf -d "$plugin" | tee build/native-linux/plugin-dynamic.txt
+          grep -F '$ORIGIN' build/native-linux/plugin-dynamic.txt
+          LD_LIBRARY_PATH="$PWD/build/flutter-engine" ldd "$plugin" | tee build/native-linux/plugin-ldd.txt
+          ! grep -q 'not found' build/native-linux/plugin-ldd.txt
+          grep -F "$PWD/build/plugin-bundle/lib/libmpv.so.2" build/native-linux/plugin-ldd.txt
       - uses: actions/upload-artifact@v4
         with:
           name: linux-x64-libmpv
@@ -44,3 +63,5 @@ jobs:
             build/native-linux/ldd.txt
             build/native-linux/LICENSE.LGPL
             build/native-linux/Copyright
+            build/native-linux/plugin-dynamic.txt
+            build/native-linux/plugin-ldd.txt

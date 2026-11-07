@@ -138,7 +138,8 @@ target_include_directories(
 
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
 
-set(MEDIA_KIT_LINUX_MPV "${CMAKE_BINARY_DIR}/media_kit_mpv")
+set(MEDIA_KIT_LINUX_MPV "${CMAKE_BINARY_DIR}/media_kit_mpv" CACHE INTERNAL
+  "Pinned personal libmpv build used by media_kit_video")
 add_custom_command(
   OUTPUT "${MEDIA_KIT_LINUX_MPV}/libmpv.so.2"
   COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/build-mpv.sh" "${MEDIA_KIT_LINUX_MPV}"
