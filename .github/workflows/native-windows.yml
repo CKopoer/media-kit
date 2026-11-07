@@ -32,6 +32,11 @@ jobs:
           channel: stable
           architecture: x64
           cache: true
+          cache-key: flutter-:os:-:version:-native-media-${{ matrix.arch }}
+      - name: Require native ARM64 Dart
+        if: matrix.arch == 'arm64'
+        shell: pwsh
+        run: ./native/setup-windows-arm64-flutter.ps1
       - name: Compile the native library and video plugins
         shell: pwsh
         run: |
