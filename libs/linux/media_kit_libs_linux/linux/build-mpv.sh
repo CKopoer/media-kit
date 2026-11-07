@@ -39,3 +39,4 @@ meson install -C "$root/compile" --no-rebuild
 cp -L "$root/install/lib/libmpv.so.2" "$root/libmpv.so.2.partial"
 mv "$root/libmpv.so.2.partial" "$root/libmpv.so.2"
 cp "$script/mpv-source.json" "$root/SOURCE.json"
+cp "$source/LICENSE.LGPL" "$source/Copyright" "$root/"

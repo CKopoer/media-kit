@@ -42,3 +42,5 @@ jobs:
             build/native-linux/libmpv.so.2
             build/native-linux/SOURCE.json
             build/native-linux/ldd.txt
+            build/native-linux/LICENSE.LGPL
+            build/native-linux/Copyright

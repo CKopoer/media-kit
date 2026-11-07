@@ -152,5 +152,5 @@ set(media_kit_libs_linux_bundled_libraries
   "${MEDIA_KIT_LINUX_MPV}/libmpv.so.2" PARENT_SCOPE)
 install(FILES "${MEDIA_KIT_LINUX_MPV}/SOURCE.json"
   DESTINATION "data/licenses/mpv" COMPONENT Runtime)
-install(FILES "${MEDIA_KIT_LINUX_MPV}/source-41f6a645068483470267271e1d09966ca3b9f413/COPYING.LGPLv2.1"
+install(FILES "${MEDIA_KIT_LINUX_MPV}/LICENSE.LGPL" "${MEDIA_KIT_LINUX_MPV}/Copyright"
   DESTINATION "data/licenses/mpv" COMPONENT Runtime)
