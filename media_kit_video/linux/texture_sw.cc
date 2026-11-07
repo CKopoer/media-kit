@@ -48,7 +48,7 @@ gboolean texture_sw_copy_pixels(FlPixelBufferTexture* texture,
   const gint64 output_width = video_output_get_width(video_output);
   const gint64 output_height = video_output_get_height(video_output);
   if (output_width <= 0 || output_height <= 0 ||
-      output_width > G_MAXUINT32 || output_height > G_MAXUINT32) {
+      output_width > G_MAXINT32 || output_height > G_MAXINT32) {
     return TRUE;
   }
   const auto required_width = static_cast<guint32>(output_width);
