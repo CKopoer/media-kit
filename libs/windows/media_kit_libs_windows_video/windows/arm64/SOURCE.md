@@ -28,6 +28,8 @@ in `assets.cmake` and `angle-files.cmake`.
   Package SHA-256: `1a5e4c82fc568b83b2e2cbb1e9145d61bda15ed6e2d9f6fdfb96e674aaed49b9`.
   Source: https://github.com/KhronosGroup/Vulkan-Loader/tree/v1.4.357.0
   Build materials and original package: https://packages.msys2.org/packages/mingw-w64-clang-aarch64-vulkan-loader
+  GitHub normalizes `~` to `.` in the mirrored asset filename; its bytes and
+  complete SHA-256 remain unchanged.
   The original `.BUILDINFO`, `.PKGINFO` and license remain in the mirrored package.
   The loader DLL and Apache license are bundled because libmpv has a hard import
   of `vulkan-1.dll`, independently of the ANGLE/OpenGL renderer. This does not

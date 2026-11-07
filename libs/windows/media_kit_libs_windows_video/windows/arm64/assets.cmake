@@ -16,6 +16,6 @@ set(MEDIA_KIT_ANGLE_ROOT "angle-windows-arm64-a96fca8d5ee2ca61e8de419e38cd577579
 set(MEDIA_KIT_ANGLE_FILE_MANIFEST "${CMAKE_CURRENT_LIST_DIR}/angle-files.cmake")
 set(MEDIA_KIT_ANGLE_IMPORT_LIBS libEGL.lib libGLESv2.lib)
 set(MEDIA_KIT_ANGLE_RUNTIME_FILES libEGL.dll libGLESv2.dll)
-set(MEDIA_KIT_VULKAN_ARCHIVE "mingw-w64-clang-aarch64-vulkan-loader-1~1.4.357.0-1-any.pkg.tar.zst")
+set(MEDIA_KIT_VULKAN_ARCHIVE "mingw-w64-clang-aarch64-vulkan-loader-1.1.4.357.0-1-any.pkg.tar.zst")
 set(MEDIA_KIT_VULKAN_URL "https://github.com/CKopoer/media-kit/releases/download/native-windows-arm64-2026-11-07/${MEDIA_KIT_VULKAN_ARCHIVE}")
 set(MEDIA_KIT_VULKAN_SHA256 "1a5e4c82fc568b83b2e2cbb1e9145d61bda15ed6e2d9f6fdfb96e674aaed49b9")
