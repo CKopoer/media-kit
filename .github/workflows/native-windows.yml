@@ -75,8 +75,12 @@ jobs:
           "@ | Set-Content build/native-smoke/pubspec.yaml
           Push-Location build/native-smoke
           try {
-            flutter build windows --release
-            if ($LASTEXITCODE -ne 0) { throw 'Windows native plugin compilation failed.' }
+            flutter build windows --release --verbose
+            if ($LASTEXITCODE -ne 0) {
+              # Flutter's normal logger hides CMake install diagnostics.
+              cmake --install build/windows/${{ matrix.arch }} --config Release
+              throw 'Windows native plugin compilation failed.'
+            }
           } finally { Pop-Location }
       - name: Verify PE architecture and native loading
         timeout-minutes: 3
