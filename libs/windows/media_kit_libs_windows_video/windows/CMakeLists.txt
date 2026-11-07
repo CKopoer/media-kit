@@ -27,6 +27,19 @@ include("${CMAKE_CURRENT_LIST_DIR}/native-assets.cmake")
 media_kit_extract_windows_assets("${CMAKE_BINARY_DIR}")
 set(LIBMPV_SRC "${MEDIA_KIT_MPV_SDK}")
 set(ANGLE_SRC "${MEDIA_KIT_ANGLE_SDK}")
+if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-arm64")
+  # The upstream archive ships DLLs but omits their MSVC import libraries.
+  # Export definitions are derived from the exact hash-verified DLLs. Generate
+  # target import libraries with MSVC's librarian rather than using static ANGLE.
+  foreach(name libEGL libGLESv2)
+    execute_process(COMMAND "${CMAKE_AR}" /nologo /machine:arm64
+      "/def:${CMAKE_CURRENT_LIST_DIR}/arm64/${name}.def"
+      "/out:${ANGLE_SRC}/${name}.lib" RESULT_VARIABLE result)
+    if(NOT result EQUAL 0)
+      message(FATAL_ERROR "Could not generate the ARM64 ${name} import library")
+    endif()
+  endforeach()
+endif()
 
 set(PLUGIN_NAME "media_kit_libs_windows_video_plugin")
 

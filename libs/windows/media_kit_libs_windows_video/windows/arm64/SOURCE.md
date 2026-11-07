@@ -16,8 +16,11 @@ in `assets.cmake` and `angle-files.cmake`.
   Build and packaging instructions: https://github.com/yorickreum/angle-libs/tree/485758dd4baf87570c2aac3cc47577a9514d3429
   Original archive: https://github.com/yorickreum/angle-libs/releases/tag/a96fca8
   This is the D3D11/OpenGL build without Vulkan. The original archive includes
-  public headers, MSVC import libraries, DLLs, static libraries and LICENSE.
-  Only the shared DLLs are linked and bundled; LICENSE and this source record
+  public headers, DLLs, a static library and LICENSE, but no MSVC import libraries.
+  `libEGL.def` and `libGLESv2.def` record all named exports from the exact verified
+  DLLs (`dumpbin /nologo /exports`). Configuration uses MSVC `lib /machine:arm64
+  /def:<name>.def /out:<name>.lib` to generate import libraries. The static ANGLE
+  library is not linked. Only the shared DLLs are bundled; LICENSE and this source record
   accompany the application. Upstream third-party source licenses continue to
   apply; the media-kit MIT license does not replace them.
 
