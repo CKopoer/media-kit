@@ -6,6 +6,7 @@
 
 import 'dart:io';
 import 'dart:ffi';
+import 'package:path/path.dart' as p;
 
 /// {@template native_library}
 ///
@@ -45,7 +46,21 @@ abstract class NativeLibrary {
         return;
       }
     } catch (_) {}
-    // Attempt to load default names.
+    // A packaged Flutter/Linux app owns this exact library. Prefer it over
+    // the development symlink libmpv.so installed in a host system. If an
+    // existing bundled library is broken, report that error instead of
+    // silently changing the runtime to a different system libmpv.
+    final bundled = bundledLibraryPath(
+      Platform.resolvedExecutable,
+      platform: Platform.operatingSystem,
+      exists: (path) => File(path).existsSync(),
+    );
+    if (bundled != null) {
+      DynamicLibrary.open(bundled);
+      _resolved = bundled;
+      return;
+    }
+    // Attempt to load default names for non-bundled Dart applications.
     final names = {
       'windows': [
         'libmpv-2.dll',
@@ -98,6 +113,17 @@ abstract class NativeLibrary {
         'Unsupported operating system: ${Platform.operatingSystem}',
       );
     }
+  }
+
+  /// Locates the library supplied by the Linux Flutter library plugin.
+  static String? bundledLibraryPath(
+    String executable, {
+    required String platform,
+    required bool Function(String) exists,
+  }) {
+    if (platform != 'linux') return null;
+    final path = p.join(p.dirname(executable), 'lib', 'libmpv.so.2');
+    return exists(path) ? path : null;
   }
 
   /// The resolved libmpv dynamic library.
