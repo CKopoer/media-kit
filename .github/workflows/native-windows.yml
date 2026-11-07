@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/native-windows.yml
       - native/windows-smoke.ps1
+      - native/setup-windows-arm64-flutter.ps1
+      - native/windows-architecture.ps1
       - libs/windows/**
       - media_kit_video/windows/**
 permissions:
@@ -35,6 +37,7 @@ jobs:
           cache-key: flutter-:os:-:version:-native-media-${{ matrix.arch }}
       - name: Require native ARM64 Dart
         if: matrix.arch == 'arm64'
+        timeout-minutes: 10
         shell: pwsh
         run: ./native/setup-windows-arm64-flutter.ps1
       - name: Compile the native library and video plugins
@@ -76,6 +79,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Windows native plugin compilation failed.' }
           } finally { Pop-Location }
       - name: Verify PE architecture and native loading
+        timeout-minutes: 3
         shell: pwsh
         run: ./native/windows-smoke.ps1 -Directory build/native-smoke/build/windows/${{ matrix.arch }}/runner/Release -Architecture ${{ matrix.arch }}
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
