@@ -1,0 +1,80 @@
+name: Personal Windows native media
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/windows-arm64]
+    paths:
+      - .github/workflows/native-windows.yml
+      - native/windows-smoke.ps1
+      - libs/windows/**
+      - media_kit_video/windows/**
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2022
+            arch: x64
+          - runner: windows-11-arm
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.6'
+          channel: stable
+          architecture: x64
+          cache: true
+      - name: Compile the native library and video plugins
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          flutter create --platforms=windows --project-name native_media_smoke build/native-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'Could not create the smoke project.' }
+          @"
+          name: native_media_smoke
+          environment:
+            sdk: '>=3.13.0 <4.0.0'
+          dependencies:
+            flutter:
+              sdk: flutter
+            media_kit_video:
+              git:
+                url: https://github.com/CKopoer/media-kit.git
+                ref: $env:GITHUB_SHA
+                path: media_kit_video
+            media_kit_libs_windows_video:
+              git:
+                url: https://github.com/CKopoer/media-kit.git
+                ref: $env:GITHUB_SHA
+                path: libs/windows/media_kit_libs_windows_video
+          dependency_overrides:
+            wakelock_plus: 1.8.1
+            media_kit:
+              git:
+                url: https://github.com/CKopoer/media-kit.git
+                ref: $env:GITHUB_SHA
+                path: media_kit
+          flutter:
+            uses-material-design: true
+          "@ | Set-Content build/native-smoke/pubspec.yaml
+          Push-Location build/native-smoke
+          try {
+            flutter build windows --release
+            if ($LASTEXITCODE -ne 0) { throw 'Windows native plugin compilation failed.' }
+          } finally { Pop-Location }
+      - name: Verify PE architecture and native loading
+        shell: pwsh
+        run: ./native/windows-smoke.ps1 -Directory build/native-smoke/build/windows/${{ matrix.arch }}/runner/Release -Architecture ${{ matrix.arch }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-${{ matrix.arch }}-native-smoke
+          path: build/native-smoke/build/windows/${{ matrix.arch }}/runner/Release/
+          if-no-files-found: error

@@ -18,8 +18,8 @@ project(${PROJECT_NAME} LANGUAGES CXX)
 # Deal with MSVC incompatiblity
 add_compile_definitions(_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR)
 
-if(NOT FLUTTER_TARGET_PLATFORM STREQUAL "windows-x64")
-  message(FATAL_ERROR "This native asset set is verified for Windows x64 only")
+if(NOT FLUTTER_TARGET_PLATFORM MATCHES "^windows-(x64|arm64)$")
+  message(FATAL_ERROR "Unsupported Windows architecture: ${FLUTTER_TARGET_PLATFORM}")
 endif()
 
 # Source, checksums and native ownership live with this library plugin.
@@ -61,17 +61,15 @@ target_link_libraries(
   flutter_wrapper_plugin
 )
 
-set(
-  media_kit_libs_windows_video_bundled_libraries
-  "${LIBMPV_SRC}/libmpv-2.dll"
-  "${ANGLE_SRC}/d3dcompiler_47.dll"
-  "${ANGLE_SRC}/libEGL.dll"
-  "${ANGLE_SRC}/libGLESv2.dll"
-  "${ANGLE_SRC}/vk_swiftshader.dll"
-  "${ANGLE_SRC}/vulkan-1.dll"
-  "${ANGLE_SRC}/zlib.dll"
-  PARENT_SCOPE
-)
+set(windows_runtime "${LIBMPV_SRC}/libmpv-2.dll")
+foreach(file IN LISTS MEDIA_KIT_ANGLE_RUNTIME_FILES)
+  list(APPEND windows_runtime "${ANGLE_SRC}/${file}")
+endforeach()
+set(media_kit_libs_windows_video_bundled_libraries ${windows_runtime} PARENT_SCOPE)
+if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-arm64")
+  install(FILES "${ANGLE_SRC}/LICENSE" DESTINATION "data/licenses/angle" COMPONENT Runtime)
+  install(FILES "${CMAKE_CURRENT_LIST_DIR}/arm64/SOURCE.md" DESTINATION "data/licenses/angle" COMPONENT Runtime)
+endif()
 
 # Refuse a replaced DLL at install time as well as during configuration.
 list(GET MEDIA_KIT_MPV_HASHES 0 expected_dll)

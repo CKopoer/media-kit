@@ -53,6 +53,10 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
   )
 
+  set(angle_imports)
+  foreach(file IN LISTS MEDIA_KIT_ANGLE_IMPORT_LIBS)
+    list(APPEND angle_imports "${ANGLE_SRC}/${file}")
+  endforeach()
   target_link_libraries(
     ${PLUGIN_NAME} PRIVATE
     flutter
@@ -60,8 +64,7 @@ if(MEDIA_KIT_LIBS_AVAILABLE)
 
     # Link to libmpv & ANGLE.
     "${LIBMPV_SRC}/libmpv.dll.a"
-    "${ANGLE_SRC}/lib/libEGL.dll.lib"
-    "${ANGLE_SRC}/lib/libGLESv2.dll.lib"
+    ${angle_imports}
   )
 else()
   message(NOTICE "media_kit: WARNING: package:media_kit_libs_*** not found.")
