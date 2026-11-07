@@ -81,13 +81,16 @@ endforeach()
 if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-arm64")
   # This SDK links vulkan-1.dll even when the video renderer uses ANGLE/OpenGL.
   list(APPEND windows_runtime "${MEDIA_KIT_VULKAN_SDK}/bin/vulkan-1.dll")
+  # Flutter's install prefix contains a target generator expression. Relative
+  # destinations retain that expression literally in subdirectory install code.
+  set(native_license_dir "$<TARGET_FILE_DIR:${BINARY_NAME}>/data/licenses")
   install(FILES "${MEDIA_KIT_VULKAN_SDK}/share/licenses/vulkan-loader/LICENSE"
-    DESTINATION "data/licenses/vulkan-loader" COMPONENT Runtime)
+    DESTINATION "${native_license_dir}/vulkan-loader" COMPONENT Runtime)
 endif()
 set(media_kit_libs_windows_video_bundled_libraries ${windows_runtime} PARENT_SCOPE)
 if(FLUTTER_TARGET_PLATFORM STREQUAL "windows-arm64")
-  install(FILES "${ANGLE_SRC}/LICENSE" DESTINATION "data/licenses/angle" COMPONENT Runtime)
-  install(FILES "${CMAKE_CURRENT_LIST_DIR}/arm64/SOURCE.md" DESTINATION "data/licenses/angle" COMPONENT Runtime)
+  install(FILES "${ANGLE_SRC}/LICENSE" DESTINATION "${native_license_dir}/angle" COMPONENT Runtime)
+  install(FILES "${CMAKE_CURRENT_LIST_DIR}/arm64/SOURCE.md" DESTINATION "${native_license_dir}/angle" COMPONENT Runtime)
 endif()
 
 # Refuse a replaced DLL at install time as well as during configuration.
