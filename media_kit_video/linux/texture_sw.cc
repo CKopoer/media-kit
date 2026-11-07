@@ -45,8 +45,14 @@ gboolean texture_sw_copy_pixels(FlPixelBufferTexture* texture,
                                 GError** error) {
   TextureSW* self = TEXTURE_SW(texture);
   VideoOutput* video_output = self->video_output;
-  gint32 required_width = (guint32)video_output_get_width(video_output);
-  gint32 required_height = (guint32)video_output_get_height(video_output);
+  const gint64 output_width = video_output_get_width(video_output);
+  const gint64 output_height = video_output_get_height(video_output);
+  if (output_width <= 0 || output_height <= 0 ||
+      output_width > G_MAXUINT32 || output_height > G_MAXUINT32) {
+    return TRUE;
+  }
+  const auto required_width = static_cast<guint32>(output_width);
+  const auto required_height = static_cast<guint32>(output_height);
   if (required_width > 0 && required_height > 0) {
     guint8* pixel_buffer = video_output_get_pixel_buffer(video_output);
     if (self->current_width != required_width ||
