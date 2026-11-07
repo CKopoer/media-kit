@@ -6,7 +6,7 @@
 Windows 调试引用缓存使用进程创建时间区分重复 PID。从 media_kit 目录运行：
 
 ```powershell
-dart --packages=tool/ffigen/.dart_tool/package_config.json run tool/ffigen.dart
+dart run tool/ffigen.dart
 ```
 
 读取本机安装的 Windows SDK 10.0.26100.0 与 MSVC 14.44.35207 头文件，
