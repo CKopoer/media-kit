@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:isolate';
 import 'package:media_kit/src/player/native/utils/process_identity.dart';
 import 'package:test/test.dart';
 
@@ -8,7 +9,10 @@ void main() {
     final identity = nativeReferenceProcessIdentity();
     expect(nativeReferenceProcessIdentity(), identity);
     expect(identity, startsWith('$pid.'));
-    final root = Directory.current;
+    final entry = await Isolate.resolvePackageUri(
+        Uri.parse('package:media_kit/media_kit.dart'));
+    if (entry == null) throw StateError('media_kit package is unavailable');
+    final root = File.fromUri(entry).parent.parent;
     final result = await Process.run(Platform.resolvedExecutable, [
       '--packages=${root.parent.path}/.dart_tool/package_config.json',
       '${root.path}/test/fixtures/process_identity_probe.dart',
