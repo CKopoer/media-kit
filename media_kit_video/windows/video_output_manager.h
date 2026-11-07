@@ -41,7 +41,8 @@ class VideoOutputManager {
                std::optional<int64_t> height);
 
   // Destroys the |VideoOutput| with given handle.
-  void Dispose(int64_t handle);
+  void SetViewportSize(int64_t handle, std::optional<int64_t> width, std::optional<int64_t> height, uint64_t revision);
+  void Dispose(int64_t handle, std::function<void()> on_disposed);
 
   ~VideoOutputManager();
 

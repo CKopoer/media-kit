@@ -1,0 +1,44 @@
+name: Personal Linux libmpv
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build pkg-config gcc g++ curl \
+            libavcodec-dev libavfilter-dev libavformat-dev libavutil-dev \
+            libswresample-dev libswscale-dev libass-dev libplacebo-dev \
+            libegl1-mesa-dev libgl-dev libva-dev libvdpau-dev libdrm-dev \
+            libgbm-dev libx11-dev libxrandr-dev libxpresent-dev libxss-dev \
+            libpulse-dev libasound2-dev libwayland-dev wayland-protocols libxkbcommon-dev
+      - name: Build from the pinned personal source
+        run: bash libs/linux/media_kit_libs_linux/linux/build-mpv.sh "$PWD/build/native-linux"
+      - name: Verify client ABI and shared dependencies
+        run: |
+          ldd build/native-linux/libmpv.so.2 | tee build/native-linux/ldd.txt
+          ! grep -q 'not found' build/native-linux/ldd.txt
+          python3 - <<'PY'
+          import ctypes
+          lib = ctypes.CDLL('./build/native-linux/libmpv.so.2')
+          lib.mpv_client_api_version.restype = ctypes.c_ulong
+          assert lib.mpv_client_api_version() >> 16 == 2
+          lib.mpv_create.restype = ctypes.c_void_p
+          ctx = lib.mpv_create()
+          assert ctx
+          lib.mpv_destroy.argtypes = [ctypes.c_void_p]
+          lib.mpv_destroy(ctx)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64-libmpv
+          path: |
+            build/native-linux/libmpv.so.2
+            build/native-linux/SOURCE.json
+            build/native-linux/ldd.txt

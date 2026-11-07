@@ -58,6 +58,18 @@ void main() {
     }
   });
 
+  test('native flag properties round trip through libmpv', () async {
+    final player = Player();
+    addTearDown(player.dispose);
+    final native = player.platform as NativePlayer;
+    for (var i = 0; i < 8; i++) {
+      await player.play();
+      expect(await native.getProperty('pause'), 'no');
+      await player.pause();
+      expect(await native.getProperty('pause'), 'yes');
+    }
+  });
+
   test('per-file options and mixed synchronous hooks survive unload', () async {
     final directory =
         await Directory.systemTemp.createTemp('media-kit-options');

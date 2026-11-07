@@ -1,0 +1,46 @@
+set(MEDIA_KIT_ANGLE_FILES
+  "d3dcompiler_47.dll"
+  "include/EGL/.clang-format"
+  "include/EGL/egl.h"
+  "include/EGL/eglext.h"
+  "include/EGL/eglext_angle.h"
+  "include/EGL/eglplatform.h"
+  "include/GLES2/.clang-format"
+  "include/GLES2/gl2.h"
+  "include/GLES2/gl2ext.h"
+  "include/GLES2/gl2ext_angle.h"
+  "include/GLES2/gl2platform.h"
+  "include/KHR/.clang-format"
+  "include/KHR/khrplatform.h"
+  "lib/libEGL.dll.lib"
+  "lib/libGLESv2.dll.lib"
+  "libc++.dll"
+  "libEGL.dll"
+  "libGLESv2.dll"
+  "vk_swiftshader.dll"
+  "vulkan-1.dll"
+  "zlib.dll"
+)
+set(MEDIA_KIT_ANGLE_HASHES
+  5653bc7b0e2701561464ef36602ff6171c96bffe96e4c3597359cd7addcba88a
+  32473c8636a59d56b9105f903e30b0c3447d9914fc9efba30d6fd88adc36e055
+  ae071b912fb22c12c9bfb5d93b73f764ef9f8400ea6e68c2fe7a5a36586129c1
+  6e783dc191c27f7f7400e0797532b11edc6d5d433b8e8fbc00dbaddce22b89ff
+  be4c9f3ee5e4502316e44d4cf6c9f4946b01ec64fe4403f0ee579b5fcecc44fd
+  1ced398ec9392dd5d35cfebbcf44ff4a725f801ad68294b5b611aa004ecb6311
+  32473c8636a59d56b9105f903e30b0c3447d9914fc9efba30d6fd88adc36e055
+  10f230486c1eb8b1dbe3e87ef8d12702932faaf63fd576c92cdef20339ba189a
+  665b1ef9b58c5dee6a52479f15b04b93eb6bc173165fa4b18a22621c849f02f9
+  b924d1a471ae245f27cd36d7f16e05ae747b59a10675d956e1f7ebab4ec9aa32
+  77e04af2c5a32f3491d1462a14c4dad29d66b9ae9bf3cec97cf4178d3666a7a3
+  32473c8636a59d56b9105f903e30b0c3447d9914fc9efba30d6fd88adc36e055
+  03e9b2fb1a06a67dfcedb8b67da62cbd508c4cd2c4c913dbe3c4b5813213105a
+  f98edce75b32a5f61ff13e9b1dd2e87a65ee5bb41e618dc099674454c4566855
+  dd95f995daf80795cea7d73c62162f4efda7171bf1b4ac9197d2539659174f47
+  8adf316d0d6eb6841da663f6a63fdde6ed8e43dfb6610dc2076942b5454df2b9
+  b2590bd0692f0381fc45c20bf1c7f7f713c9ea19c7ea6bab62efdd1fadc4eaac
+  620bb6e38d7ed6c760a0cf4a8eb6a8f64b259b96ff286551cd32cefc6c35ca39
+  4f33eea716491972cb1ad123a78acef485f852581130d3f3a98a1981009004f2
+  3be9a95dd9019aa1aca47ade26f5c1c7c0047f3cf6f633d586c9ec0d3b459566
+  82d5bf175cf882ac9afc1558b416e674606d055966bc09529076b28a498fc0e4
+)

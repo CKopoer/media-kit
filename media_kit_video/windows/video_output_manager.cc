@@ -38,14 +38,19 @@ void VideoOutputManager::SetSize(int64_t handle,
   }).detach();
 }
 
-void VideoOutputManager::Dispose(int64_t handle) {
+void VideoOutputManager::SetViewportSize(
+    int64_t handle, std::optional<int64_t> width,
+    std::optional<int64_t> height, uint64_t revision) {
   std::thread([=]() {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (video_outputs_.find(handle) != video_outputs_.end()) {
-      video_outputs_.erase(handle);
+    const auto output = video_outputs_.find(handle);
+    if (output != video_outputs_.end()) {
+      output->second->SetViewportSize(width, height, revision);
     }
   }).detach();
 }
+
+#include "video_output_manager_dispose.inc"
 
 VideoOutputManager::~VideoOutputManager() {
   std::lock_guard<std::mutex> lock(mutex_);

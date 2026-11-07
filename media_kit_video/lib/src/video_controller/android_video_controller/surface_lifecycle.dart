@@ -20,9 +20,12 @@ class AndroidSurfaceLifecycle {
     required this.resizeSurface,
     required this.setProperty,
     required this.onSize,
+    this.resolveVideoOutput,
   });
 
   final String vo;
+  final String Function()? resolveVideoOutput;
+  String get _videoOutput => resolveVideoOutput?.call() ?? vo;
   final bool attachAfterVideoParameters;
   final Future<int> Function() createSurface;
   final Future<void> Function() releaseSurface;
@@ -125,12 +128,14 @@ class AndroidSurfaceLifecycle {
   }
 
   void _attach() {
+    final vo = _videoOutput;
     setProperty('wid', _wid.toString());
     setProperty('vo', vo);
     if (vo == 'mediacodec_embed') setProperty('vid', 'auto');
   }
 
   void _detach() {
+    final vo = _videoOutput;
     // Stop the VO before dropping its Java/JNI reference.
     setProperty('vo', 'null');
     if (vo == 'mediacodec_embed') setProperty('vid', 'no');

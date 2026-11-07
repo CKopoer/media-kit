@@ -1588,7 +1588,7 @@ class NativePlayer extends PlatformPlayer {
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'pause' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final playing = prop.ref.data.cast<Int8>().value == 0;
+        final playing = prop.ref.data.cast<Int>().value == 0;
         if (isPlayingStateChangeAllowed) {
           state = state.copyWith(playing: playing);
           if (!playingController.isClosed) {
@@ -1599,7 +1599,7 @@ class NativePlayer extends PlatformPlayer {
       if (prop.ref.name.cast<Utf8>().toDartString() == 'core-idle' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
         // Check for [isBufferingStateChangeAllowed] because `pause` causes `core-idle` to be fired.
-        final buffering = prop.ref.data.cast<Int8>().value == 1;
+        final buffering = prop.ref.data.cast<Int>().value != 0;
         if (buffering) {
           if (isBufferingStateChangeAllowed) {
             state = state.copyWith(buffering: true);
@@ -1617,7 +1617,7 @@ class NativePlayer extends PlatformPlayer {
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'paused-for-cache' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final buffering = prop.ref.data.cast<Int8>().value == 1;
+        final buffering = prop.ref.data.cast<Int>().value != 0;
         state = state.copyWith(buffering: buffering);
         if (!bufferingController.isClosed) {
           bufferingController.add(buffering);
@@ -2024,7 +2024,7 @@ class NativePlayer extends PlatformPlayer {
       }
       if (prop.ref.name.cast<Utf8>().toDartString() == 'eof-reached' &&
           prop.ref.format == generated.mpv_format.MPV_FORMAT_FLAG) {
-        final value = prop.ref.data.cast<Bool>().value;
+        final value = prop.ref.data.cast<Int>().value != 0;
         if (value) {
           if (isPlayingStateChangeAllowed) {
             state = state.copyWith(
@@ -2659,13 +2659,17 @@ class NativePlayer extends PlatformPlayer {
   }
 
   Future<void> _setPropertyFlag(String name, bool value) async {
-    final ptr = calloc<Bool>(1)..value = value;
-    await _setProperty(
-      name,
-      generated.mpv_format.MPV_FORMAT_FLAG,
-      ptr.cast(),
-    );
-    calloc.free(ptr);
+    // MPV_FORMAT_FLAG is a C int, not C bool. libmpv reads sizeof(int).
+    final ptr = calloc<Int>()..value = value ? 1 : 0;
+    try {
+      await _setProperty(
+        name,
+        generated.mpv_format.MPV_FORMAT_FLAG,
+        ptr.cast(),
+      );
+    } finally {
+      calloc.free(ptr);
+    }
   }
 
   Future<void> _setPropertyDouble(String name, double value) async {

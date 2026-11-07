@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "release": "native-2026-11-07",
+  "sourceRepository": "https://github.com/CKopoer/mpv",
+  "windowsSource": "88eb9f2e73945d8bc9c133a2f67babaa9af34680",
+  "androidSource": "9fda3e12a57a7b3ebd627a3c1b37561709d4ffee",
+  "assets": [
+    {
+      "name": "mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z",
+      "origin": "https://github.com/zhongfly/mpv-winbuild/releases/download/2026-10-12-88eb9f2e73/mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z",
+      "sha256": "d1a3f57dfb3c7f07e5456e32e9ecc9e406f6457f2560ff5801c9b37a8036f507",
+      "bootstrapCache": "build/windows/x64/mpv-dev-lgpl-x86_64-20261012-git-88eb9f2e73.7z"
+    },
+    {
+      "name": "ANGLE.7z",
+      "origin": "https://github.com/alexmercerind/flutter-windows-ANGLE-OpenGL-ES/releases/download/v1.0.1/ANGLE.7z",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/ANGLE.7z",
+      "sha256": "cc5911bb15d596fd5a2b362613ad35b7093b427117269a7359054a65746a5f9a",
+      "bootstrapCache": "build/windows/x64/ANGLE.7z"
+    },
+    {
+      "name": "default-arm64-v8a.jar",
+      "origin": "https://github.com/My-Responsitories/libmpv-android-video-build/releases/download/20260906/default-arm64-v8a.jar",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/default-arm64-v8a.jar",
+      "sha256": "98df6410375cc7a4be7e6eff56f9ccd88fa52678973cc23bcf7e934ab8c8682d",
+      "bootstrapCache": "build/media_kit_libs_android_video/20260906/default-arm64-v8a.jar"
+    },
+    {
+      "name": "default-armeabi-v7a.jar",
+      "origin": "https://github.com/My-Responsitories/libmpv-android-video-build/releases/download/20260906/default-armeabi-v7a.jar",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/default-armeabi-v7a.jar",
+      "sha256": "75ba2199848cd6224817320ddfabb7d7ea48fb4cfb1721b0090043d5a8a38602",
+      "bootstrapCache": "build/media_kit_libs_android_video/20260906/default-armeabi-v7a.jar"
+    },
+    {
+      "name": "default-x86_64.jar",
+      "origin": "https://github.com/My-Responsitories/libmpv-android-video-build/releases/download/20260906/default-x86_64.jar",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/default-x86_64.jar",
+      "sha256": "1caa6198de22808bd7f10fcff2923f5eb174cc42ef24569aeafb98c6597457a4",
+      "bootstrapCache": "build/media_kit_libs_android_video/20260906/default-x86_64.jar"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default.tar.gz",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default.tar.gz",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default.tar.gz",
+      "sha256": "dd9928fff9c97329e17f69fe8ef0d621cf458f9f70847955f84b4eb1e9047b09"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Ass.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Ass.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Ass.zip",
+      "sha256": "a2ee62e663698533443b160dce1f1a9e5806df5cbb80d632abdafca5fa857cff"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avcodec.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avcodec.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avcodec.zip",
+      "sha256": "5249e4ca10b8176ab7f3b353300a7cdedee0beec85a301ac7171db2cae49890a"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avfilter.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avfilter.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avfilter.zip",
+      "sha256": "58ad9ea3ec51013e9b051a5836d992d9c18c7a832568b705be37d9a2085c234f"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avformat.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avformat.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avformat.zip",
+      "sha256": "302601edb397ac0845a9ded886615ab8f9689807b0d2987056e1d8a20d590370"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avutil.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avutil.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Avutil.zip",
+      "sha256": "1a3e9e3952807793477b491a2ea5832a67a316021fb2be92fc87fb5890bd4fbb"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Dav1d.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Dav1d.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Dav1d.zip",
+      "sha256": "a16c707091b643a2356d4393e9310ec9a4782076676442a7c3edb7debd6a2eea"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Freetype.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Freetype.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Freetype.zip",
+      "sha256": "55250debc9ebdb68529630ba00f9e5c19875ee6dd75f1c8556d0f8ef3ff82857"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Fribidi.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Fribidi.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Fribidi.zip",
+      "sha256": "46a684eb89ebc69712b7e623aedb151745a799f4e4dd81306c3b9fe1502cdc1d"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Harfbuzz.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Harfbuzz.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Harfbuzz.zip",
+      "sha256": "f91b9609e1e4383678d4a1cbb6e376d19e11bbf81410bc20b1d7f942a1147a33"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedcrypto.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedcrypto.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedcrypto.zip",
+      "sha256": "4620bae7d478aed05c33ea43c0baa040691a97fff76ed6a2919a5324d2ff09a2"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedtls.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedtls.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedtls.zip",
+      "sha256": "e51e42c65b914433c2822677cecc5289adbabd365bc0b6df17bd3bbe17ab113a"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedx509.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedx509.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mbedx509.zip",
+      "sha256": "fb76ec7dcd8c145a6f8140ee801dcd93492b5e5b0555233154cf0a2f220b09dd"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mpv.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mpv.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Mpv.zip",
+      "sha256": "5884589503b2dc7380666cc2bdc370be79a2e67cafe1159941901ef4e099ba90"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Png16.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Png16.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Png16.zip",
+      "sha256": "5606ce2919f3fa1e8b0190c4ed62322ae5555e66eea2716d91c53fd526c79c96"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Swresample.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Swresample.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Swresample.zip",
+      "sha256": "62f3ac54a07b370ac5146d676a5a75321908b19ece546a4e3b1ed2c3f3213166"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Swscale.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Swscale.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Swscale.zip",
+      "sha256": "26201930bfb7bfcd02eea2ad78a3d6bcf593e85bb1a894cf3925316800f3c54a"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Uchardet.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Uchardet.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Uchardet.zip",
+      "sha256": "14beb98e593abdda240c057f0098eefd2231849a20b084145e00a3c8894e0b86"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Xml2.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Xml2.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_macos-universal-video-default_Xml2.zip",
+      "sha256": "af478e048164312c9f53ec8b5e870679e52290b6ebb3ff472c31367db0b0e2ce"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default.tar.gz",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default.tar.gz",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default.tar.gz",
+      "sha256": "a0dbcddc0eaefa5534eb2bdc797e5386b1e0cd4057ed8f73aa2dd6105503dffb"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Ass.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Ass.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Ass.zip",
+      "sha256": "8a77837736a3606257f250c9b468afaeec97da5352352ca7a65729782affbc91"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avcodec.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avcodec.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avcodec.zip",
+      "sha256": "5c61c3505aad8c57b7a72f93e39c627b12ab334df817012a964e4aa07ef29775"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avfilter.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avfilter.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avfilter.zip",
+      "sha256": "34c5c17033174329672322fc1ebb378f5aaba3e9f2d240cd9cf801a648a45759"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avformat.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avformat.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avformat.zip",
+      "sha256": "f468b6fdbb9c9c3b5233eedd3178cc26c0ea823c03445aab013a5adb8227f094"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avutil.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avutil.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Avutil.zip",
+      "sha256": "088bd468ded07da034628fa7b9692d61eb94be63a3a87be670263d0961fb89f1"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Dav1d.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Dav1d.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Dav1d.zip",
+      "sha256": "a47af09f5382eb5e438cb550195845567bd5b213693d6304eeb3dcbac6c261a3"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Freetype.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Freetype.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Freetype.zip",
+      "sha256": "1ac7bfec5ecdc089a33a83b2f51c5443bdfdd682d679f732313274549250ae59"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Fribidi.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Fribidi.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Fribidi.zip",
+      "sha256": "e8f21d7b59511cc779bc695a662892401319ad90381290a42ee4b5a19bb3d626"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Harfbuzz.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Harfbuzz.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Harfbuzz.zip",
+      "sha256": "986e71ffdfcf63ea5e46794e8e59a5125269e54414f8914cb0c287e03ed0534d"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedcrypto.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedcrypto.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedcrypto.zip",
+      "sha256": "bfc0fc42eb391f890a2ecff4c58b9f6beb294794bde74000341c1f5922666548"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedtls.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedtls.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedtls.zip",
+      "sha256": "15285eeb50d4f0dbaa55d1acf255eabd9be9fc010341706ac7a88a3262ce5579"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedx509.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedx509.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mbedx509.zip",
+      "sha256": "afcc5c50f7f4ce128d805e165691d5d44a2288e8d39a714055f16f2f3420ac67"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mpv.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mpv.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Mpv.zip",
+      "sha256": "d2d563fdfdaf610dd7d50284f65cfb21743e3900f15da537a4c9dc7d6c6bb2a4"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Png16.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Png16.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Png16.zip",
+      "sha256": "ca5dae5cfbf240a179a76c45c10f4fb89738d7f9ad68c2e7f5690d03625fc26e"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Swresample.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Swresample.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Swresample.zip",
+      "sha256": "b498ccadbe69a782bd29e72981b5af759700276b77f03103a6d8d13d3eed6a23"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Swscale.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Swscale.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Swscale.zip",
+      "sha256": "1cbd508b80dc66b64bdee045b9681bd0aeeee5f94d20ef9b8c9c0b3916de4188"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Uchardet.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Uchardet.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Uchardet.zip",
+      "sha256": "4c68da0007e08a1cfa73e04c4eb8eb7533e13b4cc3ef7c768806dc69c9563081"
+    },
+    {
+      "name": "libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Xml2.zip",
+      "origin": "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Xml2.zip",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default_Xml2.zip",
+      "sha256": "a16c5faef734c84048637f5bc6a3b58b79d696ce908f2e57b309e9b76023b7f1"
+    },
+    {
+      "name": "mpv-41f6a645068483470267271e1d09966ca3b9f413.tar.gz",
+      "origin": "https://github.com/CKopoer/mpv/archive/41f6a645068483470267271e1d09966ca3b9f413.tar.gz",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/mpv-41f6a645068483470267271e1d09966ca3b9f413.tar.gz",
+      "sha256": "068960e89211f2adc80af03f637fa393fb5e407d3dd23592c8fe8c5490bb7ae4"
+    }
+  ],
+  "darwinSource": "f4210f84906c3b00a65fba198c8127b6757b9350",
+  "linuxSource": "41f6a645068483470267271e1d09966ca3b9f413"
+}

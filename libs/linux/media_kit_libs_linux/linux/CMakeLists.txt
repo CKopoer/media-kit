@@ -138,8 +138,19 @@ target_include_directories(
 
 target_link_libraries(${PLUGIN_NAME} PRIVATE flutter)
 
-set(
-  media_kit_libs_linux_bundled_libraries
-  ""
-  PARENT_SCOPE
+set(MEDIA_KIT_LINUX_MPV "${CMAKE_BINARY_DIR}/media_kit_mpv")
+add_custom_command(
+  OUTPUT "${MEDIA_KIT_LINUX_MPV}/libmpv.so.2"
+  COMMAND bash "${CMAKE_CURRENT_SOURCE_DIR}/build-mpv.sh" "${MEDIA_KIT_LINUX_MPV}"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/build-mpv.sh"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mpv-source.json"
+  VERBATIM
 )
+add_custom_target(media_kit_linux_mpv DEPENDS "${MEDIA_KIT_LINUX_MPV}/libmpv.so.2")
+add_dependencies(${PLUGIN_NAME} media_kit_linux_mpv)
+set(media_kit_libs_linux_bundled_libraries
+  "${MEDIA_KIT_LINUX_MPV}/libmpv.so.2" PARENT_SCOPE)
+install(FILES "${MEDIA_KIT_LINUX_MPV}/SOURCE.json"
+  DESTINATION "data/licenses/mpv" COMPONENT Runtime)
+install(FILES "${MEDIA_KIT_LINUX_MPV}/source-41f6a645068483470267271e1d09966ca3b9f413/COPYING.LGPLv2.1"
+  DESTINATION "data/licenses/mpv" COMPONENT Runtime)

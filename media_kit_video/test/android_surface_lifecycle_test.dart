@@ -9,6 +9,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit_video/src/video_controller/android_video_controller/surface_lifecycle.dart';
 
 void main() {
+  test('late dimensions preserve a source-selected gpu-next renderer',
+      () async {
+    var output = 'gpu';
+    final fixture = _Fixture(
+      attachAfterVideoParameters: false,
+      resolveVideoOutput: () => output,
+    );
+    await fixture.lifecycle.onLoad();
+    output = 'gpu-next';
+    await fixture.lifecycle.onVideoParameters(1920, 1080);
+    expect(fixture.events.lastIndexOf('vo=gpu-next'), greaterThan(0));
+    expect(fixture.events.where((event) => event == 'vo=gpu').length, 1);
+  });
   test('GPU attaches only after its Surface has valid dimensions', () async {
     final fixture = _Fixture();
     await fixture.lifecycle.onLoad();
@@ -322,9 +335,13 @@ void main() {
 }
 
 class _Fixture {
-  _Fixture({String vo = 'gpu', bool attachAfterVideoParameters = true}) {
+  _Fixture(
+      {String vo = 'gpu',
+      bool attachAfterVideoParameters = true,
+      String Function()? resolveVideoOutput}) {
     lifecycle = AndroidSurfaceLifecycle(
       vo: vo,
+      resolveVideoOutput: resolveVideoOutput,
       attachAfterVideoParameters: attachAfterVideoParameters,
       createSurface: () async {
         final wid = ++_wid;

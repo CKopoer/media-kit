@@ -1,0 +1,17 @@
+{
+  "android": {
+    "repository": "https://github.com/CKopoer/libmpv-android-video-build",
+    "commit": "0f8d8c51de4d961167902f6d020f38fbaa000f88",
+    "upstreamBuildCommit": "8e50ecc027cd2443a3ef9b1a87991d37f1acdc41"
+  },
+  "darwin": {
+    "repository": "https://github.com/CKopoer/libmpv-darwin-build",
+    "commit": "d4d9d65f8875f873b478ac4e76e9647d0dd2f3f4",
+    "upstreamBuildCommit": "b4e3ce98826cd4a28f6121b29f56ea203346e6e3"
+  },
+  "windows": {
+    "repository": "https://github.com/CKopoer/mpv-winbuild",
+    "commit": "aa2c65f15129c3d94852cc0fcd719358f3d47aa6",
+    "upstreamBuildCommit": "8a39c5134b8e16f104ee56a5d85e36a592ad9477"
+  }
+}

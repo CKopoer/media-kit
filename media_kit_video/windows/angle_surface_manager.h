@@ -19,6 +19,8 @@
 
 #include <d3d.h>
 #include <d3d11.h>
+#include <d3d10.h>
+#include <optional>
 #include <wrl.h>
 
 #include "utils.h"
@@ -49,7 +51,12 @@ class ANGLESurfaceManager {
 
   void Draw(std::function<void()> callback);
 
-  void Read();
+  HANDLE Read();
+  bool HasFrame() const { return has_frame_; }
+  Microsoft::WRL::ComPtr<ID3D11Texture2D> TextureForHandle(HANDLE handle) const {
+    return handle == internal_handle_ ? internal_d3d_11_texture_2D_
+                                      : d3d_11_texture_2D_;
+  }
 
   void MakeCurrent(bool value);
 
@@ -61,6 +68,7 @@ class ANGLESurfaceManager {
   void CleanUp(bool release_context);
 
   bool CreateD3DTexture();
+  bool UseAngleDevice();
 
   bool CreateEGLDisplay();
 
@@ -74,6 +82,11 @@ class ANGLESurfaceManager {
   // Sync |Draw| & |Read| calls.
   HANDLE mutex_ = nullptr;
   // D3D 11
+  bool has_frame_ = false;
+  bool uses_angle_device_ = false;
+  uint64_t draw_revision_ = 0;
+  std::optional<uint64_t> copied_revision_;
+  std::optional<bool> last_direct_;
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_texture_2D_;

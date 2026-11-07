@@ -4,6 +4,7 @@
 /// All rights reserved.
 /// Use of this source code is governed by MIT license that can be found in the LICENSE file.
 import 'dart:io';
+import 'dart:ffi';
 import 'dart:async';
 import 'dart:collection';
 
@@ -65,6 +66,12 @@ class AndroidVideoController extends PlatformVideoController {
         'height': height.toString(),
       }).timeout(_platformCallTimeout),
       setProperty: _setProperty,
+      // A source hook may select gpu-next after inspecting its color profile.
+      // Preserve that selection when decoded dimensions arrive.
+      resolveVideoOutput: () {
+        final value = _getProperty('vo');
+        return value.isEmpty || value == 'null' ? configuration.vo! : value;
+      },
       onSize: (width, height) {
         rect.value = Rect.fromLTWH(
           0.0,
@@ -90,6 +97,23 @@ class AndroidVideoController extends PlatformVideoController {
         }),
       );
     });
+  }
+
+  /// A hook must return before mpv's event loop can consume an async reply.
+  String _getProperty(String key) {
+    final name = key.toNativeUtf8();
+    try {
+      final data =
+          platform.mpv.mpv_get_property_string(platform.ctx, name.cast());
+      if (data == nullptr) return '';
+      try {
+        return data.cast<Utf8>().toDartString();
+      } finally {
+        platform.mpv.mpv_free(data.cast());
+      }
+    } finally {
+      calloc.free(name);
+    }
   }
 
   /// A hook must return before mpv's event loop can consume an async reply.

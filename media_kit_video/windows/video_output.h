@@ -10,6 +10,10 @@
 #define VIDEO_OUTPUT_H_
 
 #include <optional>
+#include <atomic>
+#include <cmath>
+#include <condition_variable>
+#include <utility>
 
 #include <client.h>
 #include <render.h>
@@ -75,9 +79,13 @@ class VideoOutput {
       std::function<void(int64_t, int64_t, int64_t)> callback);
 
   void SetSize(std::optional<int64_t> width, std::optional<int64_t> height);
+  void SetViewportSize(std::optional<int64_t> width, std::optional<int64_t> height, uint64_t revision);
 
  private:
+  void UnregisterTexture(int64_t id, std::function<void()> callback);
+
   void NotifyRender();
+  void RenderQueued();
 
   void Render();
 
@@ -85,12 +93,17 @@ class VideoOutput {
 
   void Resize(int64_t required_width, int64_t required_height);
 
+  std::pair<int64_t, int64_t> GetOutputDimensions() const;
+
   int64_t GetVideoWidth();
 
   int64_t GetVideoHeight();
 
   std::optional<int64_t> height_ = std::nullopt;
   std::optional<int64_t> width_ = std::nullopt;
+  std::optional<int64_t> viewport_width_ = std::nullopt;
+  std::optional<int64_t> viewport_height_ = std::nullopt;
+  uint64_t viewport_revision_ = 0;
   VideoOutputConfiguration configuration_ = VideoOutputConfiguration{};
 
   mpv_handle* handle_ = nullptr;
@@ -101,8 +114,18 @@ class VideoOutput {
   // For preventing any asynchronous operations (primarily texture objects
   // deletion after unregister in |Resize|) access this object after
   // destruction.
-  bool destroyed_ = false;
+  std::atomic<bool> destroyed_{false};
+  std::mutex render_tasks_mutex_;
+  bool render_task_queued_ = false;
+  bool rendering_ = false;
+  bool render_again_ = false;
+  std::mutex texture_release_mutex_;
+  std::condition_variable textures_released_;
+  size_t pending_texture_releases_ = 0;
 
+  Microsoft::WRL::ComPtr<ID3D11Texture2D> last_video_texture_;
+  HANDLE last_video_handle_ = nullptr;
+  FlutterDesktopPixelBuffer last_pixel_buffer_{};
   std::mutex textures_mutex_ = std::mutex();
 
   std::unordered_map<int64_t, std::unique_ptr<flutter::TextureVariant>>

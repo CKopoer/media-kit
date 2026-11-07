@@ -47,24 +47,7 @@ void ANGLESurfaceManager::SetSize(int32_t width, int32_t height) {
   Create();
 }
 
-void ANGLESurfaceManager::Draw(std::function<void()> callback) {
-  ::WaitForSingleObject(mutex_, INFINITE);
-  MakeCurrent(true);
-  callback();
-  SwapBuffers();
-  MakeCurrent(false);
-  ::ReleaseMutex(mutex_);
-}
-
-void ANGLESurfaceManager::Read() {
-  ::WaitForSingleObject(mutex_, INFINITE);
-  if (d3d_11_device_context_ != nullptr) {
-    d3d_11_device_context_->CopyResource(d3d_11_texture_2D_.Get(),
-                                         internal_d3d_11_texture_2D_.Get());
-    d3d_11_device_context_->Flush();
-  }
-  ::ReleaseMutex(mutex_);
-}
+#include "angle_gpu_queue.inc"
 
 void ANGLESurfaceManager::MakeCurrent(bool value) {
   if (value) {
@@ -74,19 +57,13 @@ void ANGLESurfaceManager::MakeCurrent(bool value) {
   }
 }
 
-void ANGLESurfaceManager::SwapBuffers() {
-  glFinish();
-}
-
 void ANGLESurfaceManager::Create() {
   CleanUp(false);
-  if (!CreateD3DTexture()) {
-    throw std::runtime_error("Unable to create Windows Direct3D device.");
-    return;
-  }
   if (!CreateEGLDisplay()) {
     throw std::runtime_error("Unable to create ANGLE EGL display.");
-    return;
+  }
+  if (!CreateD3DTexture()) {
+    throw std::runtime_error("Unable to create Windows Direct3D device.");
   }
   if (!CreateAndBindEGLSurface()) {
     throw std::runtime_error("Unable to create ANGLE EGL surface.");
@@ -111,9 +88,8 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
       eglDestroySurface(display_, surface_);
       surface_ = EGL_NO_SURFACE;
     }
-    if (instance_count_ == 1) {
-      eglTerminate(display_);
-    }
+    // EGL's default display can also belong to Flutter. Contexts and surfaces
+    // are released above; do not terminate another component's live display.
     display_ = EGL_NO_DISPLAY;
     // Release D3D device & context if the instance is being destroyed.
     if (d3d_11_device_context_) {
@@ -144,6 +120,9 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
 }
 
 bool ANGLESurfaceManager::CreateD3DTexture() {
+  if (d3d_11_device_ == nullptr) UseAngleDevice();
+  has_frame_ = false;
+  copied_revision_.reset();
   if (d3d_11_device_ == nullptr) {
     // NOTE: Not enabling Feature Level 12. It crashes directly on Windows 7.
     const auto feature_levels = {

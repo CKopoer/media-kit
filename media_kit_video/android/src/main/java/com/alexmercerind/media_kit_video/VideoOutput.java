@@ -8,11 +8,14 @@
 package com.alexmercerind.media_kit_video;
 
 import android.view.Surface;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.lang.reflect.Method;
 import java.util.Objects;
 
 import io.flutter.view.TextureRegistry;
+import io.flutter.plugin.common.MethodChannel;
 
 /**
  * Source-bound Surface lifecycle adapted from the MIT-licensed
@@ -39,9 +42,15 @@ public final class VideoOutput {
     private Surface surface;
     private long wid;
     private boolean disposed;
+    private boolean surfaceSized;
+    private boolean videoFrameReady;
+    private boolean sourceCreated;
+    private MethodChannel.Result frameWaiter;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     VideoOutput(TextureRegistry registry) {
         texture = registry.createSurfaceTexture();
+        texture.setOnFrameConsumedListener(() -> mainHandler.post(this::notifyVideoFrame));
         // A custom VO may attach before decoded dimensions are available.
         try {
             texture.surfaceTexture().setDefaultBufferSize(1, 1);
@@ -57,6 +66,10 @@ public final class VideoOutput {
 
     public long createSurface() {
         ensureActive();
+        if (sourceCreated) cancelFrameWaiter("source_replaced");
+        sourceCreated = true;
+        mainHandler.removeCallbacksAndMessages(null);
+        videoFrameReady = false;
         // The caller has synchronously set vo=null and wid=0 in the on_load
         // hook, so the old VO no longer owns these resources.
         releaseSurface();
@@ -95,13 +108,47 @@ public final class VideoOutput {
             throw new IllegalArgumentException("Video Surface dimensions must be positive.");
         }
         texture.surfaceTexture().setDefaultBufferSize(width, height);
+        surfaceSized = width > 1 && height > 1;
+    }
+
+    public void waitForVideoFrame(MethodChannel.Result result) {
+        if (disposed) {
+            result.error("disposed", "Video output was disposed.", null);
+        } else if (videoFrameReady) {
+            result.success(null);
+        } else if (frameWaiter != null) {
+            result.error("already_waiting", "A video frame wait already exists.", null);
+        } else {
+            frameWaiter = result;
+        }
+    }
+
+    private void notifyVideoFrame() {
+        if (disposed || surface == null || !surfaceSized || videoFrameReady) return;
+        videoFrameReady = true;
+        if (frameWaiter != null) {
+            MethodChannel.Result result = frameWaiter;
+            frameWaiter = null;
+            result.success(null);
+        }
+    }
+
+    private void cancelFrameWaiter(String code) {
+        if (frameWaiter != null) {
+            MethodChannel.Result result = frameWaiter;
+            frameWaiter = null;
+            result.error(code, "The video source is no longer active.", null);
+        }
     }
 
     public void dispose() {
         if (disposed) return;
         releaseSurface();
-        texture.release();
         disposed = true;
+        cancelFrameWaiter("disposed");
+        texture.setOnFrameConsumedListener(null);
+        mainHandler.removeCallbacksAndMessages(null);
+        texture.release();
     }
 
     private void ensureActive() {

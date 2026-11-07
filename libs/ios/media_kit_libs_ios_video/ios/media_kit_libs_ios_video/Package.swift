@@ -24,7 +24,7 @@ let libmpvTargets = [
     "Xml2"
 ]
 
-let libmpvArtifactBase = "https://github.com/media-kit/libmpv-darwin-build/releases/download/v0.7.2/libmpv-xcframeworks_v0.7.2_ios-universal-video-default"
+let libmpvArtifactBase = "https://github.com/CKopoer/media-kit/releases/download/native-2026-11-07/libmpv-xcframeworks_v0.7.2_ios-universal-video-default"
 let libmpvChecksums = [
     "Ass": "8a77837736a3606257f250c9b468afaeec97da5352352ca7a65729782affbc91",
     "Avcodec": "5c61c3505aad8c57b7a72f93e39c627b12ab334df817012a964e4aa07ef29775",
