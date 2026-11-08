@@ -26,9 +26,14 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
                 std::lock_guard<std::mutex> frame_lock(textures_mutex_);
                 if (destroyed_) return nullptr;
                 if (surface_manager_->HasFrame()) {
-                  last_video_handle_ = surface_manager_->Read();
-                  last_video_texture_ =
-                      surface_manager_->TextureForHandle(last_video_handle_);
+                  const auto handle = surface_manager_->Read();
+                  if (handle != nullptr) {
+                    last_video_handle_ = handle;
+                    last_video_texture_ = surface_manager_->TextureForHandle(handle);
+                  }
+                  if (surface_manager_->HasPendingFrame()) {
+                    registrar_->texture_registrar()->MarkTextureFrameAvailable(texture_id_);
+                  }
                 }
                 if (!last_video_texture_) return nullptr;
                 using TextureReference =
@@ -73,6 +78,16 @@ void VideoOutput::Resize(int64_t required_width, int64_t required_height) {
               return static_cast<FlutterDesktopPixelBuffer*>(nullptr);
             // Keep callback metadata alive across a concurrent producer resize.
             last_pixel_buffer_ = *pixel_buffer_textures_.at(texture_id_);
+            // The producer lock ends before Flutter uploads the returned bytes.
+            // Lease a private copy so the next software render cannot tear them.
+            const auto size = last_pixel_buffer_.width * last_pixel_buffer_.height * 4;
+            auto pixels = std::make_unique<uint8_t[]>(size);
+            std::copy_n(pixel_buffer_.get(), size, pixels.get());
+            last_pixel_buffer_.buffer = pixels.get();
+            last_pixel_buffer_.release_context = pixels.release();
+            last_pixel_buffer_.release_callback = [](void* context) {
+              delete[] static_cast<uint8_t*>(context);
+            };
             return &last_pixel_buffer_;
           }));
       texture_id_ =

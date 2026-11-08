@@ -77,36 +77,15 @@ void ANGLESurfaceManager::Draw(std::function<void()> callback) {
 
 HANDLE ANGLESurfaceManager::Read() {
   const BiliSailMutexLock lock(mutex_);
-  // The callback runs with Flutter's current GL context. Direct delivery is
-  // valid only on the very same D3D11 device, not merely the same GPU adapter.
-  // Producer glFlush submits the render before this consumer's sample. Both
-  // accesses then use one ordered immediate-context command stream; the driver
-  // tracks the shared resource's read/write hazards without a CPU GPU wait.
-  const bool direct =
-      uses_angle_device_ &&
-      BiliSailAngleDevice(eglGetCurrentDisplay()) == d3d_11_device_;
-  if (!last_direct_.has_value() || *last_direct_ != direct) {
-    std::cout << "media_kit: GPU delivery: "
-              << (direct ? "same-device" : "copied") << std::endl;
-    last_direct_ = direct;
-  }
-  if (direct)
-    return internal_handle_;
-  // Keep a separate consumer texture for different devices and legacy ANGLE.
-  // Repeated requests for an unchanged frame do not resubmit the same copy.
-  if (d3d_11_device_context_ != nullptr && copied_revision_ != draw_revision_) {
-    d3d_11_device_context_->CopyResource(d3d_11_texture_2D_.Get(),
-                                         internal_d3d_11_texture_2D_.Get());
-    d3d_11_device_context_->Flush();
-    copied_revision_ = draw_revision_;
-  }
-  return handle_;
+  const auto frame = snapshot_.Capture(internal_d3d_11_texture_2D_.Get(),
+                                       draw_revision_);
+  return frame ? frame->handle : nullptr;
 }
 
 void ANGLESurfaceManager::SwapBuffers() {
   if (uses_angle_device_) {
-    // GL rendering and the fallback CopyResource now use the same device and
-    // immediate context. Submit in order instead of waiting for GPU completion.
+    // Submit rendering on the same queue used by the snapshot copy. Read()
+    // verifies GPU completion before publishing the immutable allocation.
     glFlush();
   } else {
     // A legacy producer on another device still needs the original barrier.

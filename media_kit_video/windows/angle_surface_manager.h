@@ -24,6 +24,7 @@
 #include <wrl.h>
 
 #include "utils.h"
+#include "d3d11_texture_snapshot.h"
 
 #include <cstdint>
 #include <functional>
@@ -41,7 +42,11 @@ class ANGLESurfaceManager {
  public:
   const int32_t width() const { return width_; }
   const int32_t height() const { return height_; }
-  const HANDLE handle() const { return handle_; }
+  const HANDLE handle() const {
+    const auto frame = snapshot_.current();
+    return frame ? frame->handle : nullptr;
+  }
+  bool HasPendingFrame() const { return snapshot_.pending(); }
 
   ANGLESurfaceManager(int32_t width, int32_t height);
 
@@ -54,8 +59,8 @@ class ANGLESurfaceManager {
   HANDLE Read();
   bool HasFrame() const { return has_frame_; }
   Microsoft::WRL::ComPtr<ID3D11Texture2D> TextureForHandle(HANDLE handle) const {
-    return handle == internal_handle_ ? internal_d3d_11_texture_2D_
-                                      : d3d_11_texture_2D_;
+    const auto frame = snapshot_.current();
+    return frame && frame->handle == handle ? frame->texture : nullptr;
   }
 
   void MakeCurrent(bool value);
@@ -77,7 +82,7 @@ class ANGLESurfaceManager {
   int32_t width_ = 1;
   int32_t height_ = 1;
   HANDLE internal_handle_ = nullptr;
-  HANDLE handle_ = nullptr;
+  media_kit::D3D11TextureSnapshot snapshot_;
 
   // Sync |Draw| & |Read| calls.
   HANDLE mutex_ = nullptr;
@@ -85,12 +90,9 @@ class ANGLESurfaceManager {
   bool has_frame_ = false;
   bool uses_angle_device_ = false;
   uint64_t draw_revision_ = 0;
-  std::optional<uint64_t> copied_revision_;
-  std::optional<bool> last_direct_;
   ID3D11Device* d3d_11_device_ = nullptr;
   ID3D11DeviceContext* d3d_11_device_context_ = nullptr;
   Microsoft::WRL::ComPtr<ID3D11Texture2D> internal_d3d_11_texture_2D_;
-  Microsoft::WRL::ComPtr<ID3D11Texture2D> d3d_11_texture_2D_;
   // ANGLE
   EGLSurface surface_ = EGL_NO_SURFACE;
   EGLDisplay display_ = EGL_NO_DISPLAY;
