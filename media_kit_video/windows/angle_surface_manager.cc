@@ -116,41 +116,13 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
 }
 
 bool ANGLESurfaceManager::CreateD3DTexture() {
-  if (d3d_11_device_ == nullptr) UseAngleDevice();
-  has_frame_ = false;
-  if (d3d_11_device_ == nullptr) {
-    // NOTE: Not enabling Feature Level 12. It crashes directly on Windows 7.
-    const auto feature_levels = {
-        D3D_FEATURE_LEVEL_11_0,
-        D3D_FEATURE_LEVEL_10_1,
-        D3D_FEATURE_LEVEL_10_0,
-        D3D_FEATURE_LEVEL_9_3,
-    };
-
-    IDXGIAdapter* adapter = nullptr;
-    D3D_DRIVER_TYPE driver_type = D3D_DRIVER_TYPE_UNKNOWN;
-
-    // NOTE: Automatically selecting adapter on Windows 10 RTM or greater.
-    if (Utils::IsWindows10RTMOrGreater()) {
-      adapter = NULL;
-      driver_type = D3D_DRIVER_TYPE_HARDWARE;
-    } else {
-      IDXGIFactory* dxgi = nullptr;
-      ::CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&dxgi);
-      // As far as my experience goes, this is the safest approach. Passing NULL
-      // (so-called default) seems to cause issues on Windows 7 or maybe some
-      // older graphics drivers. First adapter is the default.
-      // D3D_DRIVER_TYPE_UNKNOWN| must be passed with manual adapter selection.
-      dxgi->EnumAdapters(0, &adapter);
-      dxgi->Release();
-    }
-
-    auto hr = ::D3D11CreateDevice(
-        adapter, driver_type, 0, 0, feature_levels.begin(),
-        static_cast<UINT>(feature_levels.size()), D3D11_SDK_VERSION,
-        &d3d_11_device_, 0, &d3d_11_device_context_);
-    CHECK_HRESULT("D3D11CreateDevice");
+  // Cross-device producer writes cannot be ordered with a timed-out copy.
+  // If ANGLE cannot expose its protected D3D11 queue, use VideoOutput's existing
+  // software-rendering fallback instead of creating an unrelated D3D11 device.
+  if (d3d_11_device_ == nullptr && !UseAngleDevice()) {
+    FAIL("A synchronized ANGLE D3D11 device is unavailable");
   }
+  has_frame_ = false;
 
   Microsoft::WRL::ComPtr<IDXGIDevice> dxgi_device = nullptr;
   auto dxgi_device_success = d3d_11_device_->QueryInterface(
