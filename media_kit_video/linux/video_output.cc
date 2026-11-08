@@ -22,6 +22,8 @@ struct _VideoOutput {
   EGLContext egl_context; /* Isolated EGL context (non-shared). */
   EGLSurface egl_surface; /* Place holder surface for activating egl context */
   guint8* pixel_buffer;
+  guint32 sw_frame_width;
+  guint32 sw_frame_height;
   TextureSW* texture_sw;
   GMutex mutex; /* Only used in S/W rendering. */
   mpv_handle* handle;
@@ -39,7 +41,9 @@ G_DEFINE_TYPE(VideoOutput, video_output, G_TYPE_OBJECT)
 
 static void video_output_dispose(GObject* object) {
   VideoOutput* self = VIDEO_OUTPUT(object);
+  g_mutex_lock(&self->mutex);
   self->destroyed = TRUE;
+  g_mutex_unlock(&self->mutex);
   
   // Make sure that no more callbacks are invoked from mpv.
   if (self->render_context) {
@@ -83,7 +87,11 @@ static void video_output_dispose(GObject* object) {
   if (self->texture_sw) {
     fl_texture_registrar_unregister_texture(self->texture_registrar,
                                             FL_TEXTURE(self->texture_sw));
+    g_mutex_lock(&self->mutex);
     g_free(self->pixel_buffer);
+    self->pixel_buffer = NULL;
+    self->sw_frame_width = self->sw_frame_height = 0;
+    g_mutex_unlock(&self->mutex);
     g_object_unref(self->texture_sw);
     if (self->render_context != NULL) {
       mpv_render_context_free(self->render_context);
@@ -106,6 +114,7 @@ static void video_output_init(VideoOutput* self) {
   self->egl_surface = EGL_NO_SURFACE;
   self->texture_sw = NULL;
   self->pixel_buffer = NULL;
+  self->sw_frame_width = self->sw_frame_height = 0;
   self->handle = NULL;
   self->render_context = NULL;
   self->width = 0;
@@ -280,7 +289,9 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                     g_mutex_lock(&self->mutex);
                     gint64 width = video_output_get_width(self);
                     gint64 height = video_output_get_height(self);
-                    if (width > 0 && height > 0) {
+                    if (width > 0 && height > 0 &&
+                        width <= SW_RENDERING_MAX_WIDTH &&
+                        height <= SW_RENDERING_MAX_HEIGHT) {
                       gint32 size[]{(gint32)width, (gint32)height};
                       gint32 pitch = 4 * (gint32)width;
                       mpv_render_param params[]{
@@ -291,6 +302,8 @@ VideoOutput* video_output_new(FlTextureRegistrar* texture_registrar,
                           {MPV_RENDER_PARAM_INVALID, (void*)0},
                       };
                       mpv_render_context_render(self->render_context, params);
+                      self->sw_frame_width = static_cast<guint32>(width);
+                      self->sw_frame_height = static_cast<guint32>(height);
                       fl_texture_registrar_mark_texture_frame_available(
                           self->texture_registrar,
                           FL_TEXTURE(self->texture_sw));
@@ -364,8 +377,26 @@ EGLSurface video_output_get_egl_surface(VideoOutput* self) {
   return self->egl_surface;
 }
 
-guint8* video_output_get_pixel_buffer(VideoOutput* self) {
-  return self->pixel_buffer;
+gboolean video_output_copy_pixel_buffer(VideoOutput* self, guint8** buffer,
+                                        guint32* width, guint32* height) {
+  g_mutex_lock(&self->mutex);
+  if (self->destroyed || self->pixel_buffer == NULL ||
+      self->sw_frame_width == 0 || self->sw_frame_height == 0) {
+    g_mutex_unlock(&self->mutex);
+    return FALSE;
+  }
+  const gsize size = static_cast<gsize>(self->sw_frame_width) * self->sw_frame_height * 4;
+  auto* copy = static_cast<guint8*>(g_try_malloc(size));
+  if (copy == NULL) {
+    g_mutex_unlock(&self->mutex);
+    return FALSE;
+  }
+  memcpy(copy, self->pixel_buffer, size);
+  *buffer = copy;
+  *width = self->sw_frame_width;
+  *height = self->sw_frame_height;
+  g_mutex_unlock(&self->mutex);
+  return TRUE;
 }
 
 gint64 video_output_get_width(VideoOutput* self) {

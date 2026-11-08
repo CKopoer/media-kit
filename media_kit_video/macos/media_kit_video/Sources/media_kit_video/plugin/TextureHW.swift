@@ -15,10 +15,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let context: CGLContextObj
   private let textureCache: CVOpenGLTextureCache
   private var renderContext: OpaquePointer?
-  private var textureContexts = SwappableObjectManager<TextureGLContext>(
-    objects: [],
-    skipCheckArgs: true
-  )
+  private let frames = CompletedFrameStore<CVPixelBuffer>()
 
   init(
     handle: OpaquePointer,
@@ -49,12 +46,10 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-    let textureContext = textureContexts.current
-    if textureContext == nil {
-      return nil
+    return frames.withCurrent { buffer in
+      guard let buffer = buffer else { return nil }
+      return Unmanaged.passRetained(buffer)
     }
-
-    return Unmanaged.passRetained(textureContext!.pixelBuffer)
   }
 
   private func initMPV() {
@@ -117,77 +112,57 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func resize(_ size: CGSize) {
-    if size.width == 0 || size.height == 0 {
-      return
-    }
-
-    NSLog("TextureGL: resize: \(size.width)x\(size.height)")
-    createPixelBuffer(size)
-  }
-
-  private func createPixelBuffer(_ size: CGSize) {
-    disposePixelBuffer()
-
-    textureContexts.reinit(
-      objects: [
-        TextureGLContext(
-          context: context,
-          textureCache: textureCache,
-          size: size
-        ),
-        TextureGLContext(
-          context: context,
-          textureCache: textureCache,
-          size: size
-        ),
-        TextureGLContext(
-          context: context,
-          textureCache: textureCache,
-          size: size
-        ),
-      ],
-      skipCheckArgs: true
-    )
+    // Keep the previous complete image until render publishes the new size.
   }
 
   private func disposePixelBuffer() {
-    textureContexts.reinit(objects: [], skipCheckArgs: true)
+    frames.clear()
   }
 
   public func render(_ size: CGSize) {
-    let textureContext = textureContexts.nextAvailable()
-    if textureContext == nil {
-      return
-    }
+    guard size.width > 0 && size.height > 0 else { return }
+    autoreleasepool {
+      // Each published IOSurface is write-once. Three buffers cannot prove that
+      // Flutter's Metal queue has finished sampling an older surface.
+      let textureContext = TextureGLContext(
+        context: context,
+        textureCache: textureCache,
+        size: size
+      )
 
+      CGLSetCurrentContext(context)
+      defer {
+        OpenGLHelpers.checkError("render")
+        CGLSetCurrentContext(nil)
+      }
+
+      glBindFramebuffer(GLenum(GL_FRAMEBUFFER), textureContext.frameBuffer)
+      defer {
+        glBindFramebuffer(GLenum(GL_FRAMEBUFFER), 0)
+      }
+
+      var fbo = mpv_opengl_fbo(
+        fbo: Int32(textureContext.frameBuffer),
+        w: Int32(size.width),
+        h: Int32(size.height),
+        internal_format: 0
+      )
+      let fboPtr = withUnsafeMutablePointer(to: &fbo) { $0 }
+
+      var params: [mpv_render_param] = [
+        mpv_render_param(type: MPV_RENDER_PARAM_OPENGL_FBO, data: fboPtr),
+        mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
+      ]
+      mpv_render_context_render(renderContext, &params)
+
+      // A different graphics API/queue will consume this IOSurface.
+      glFinish()
+      frames.publish(textureContext.pixelBuffer)
+    }
+    // The frame's GL wrappers are gone; do not accumulate CoreVideo cache entries.
     CGLSetCurrentContext(context)
-    defer {
-      OpenGLHelpers.checkError("render")
-      CGLSetCurrentContext(nil)
-    }
-
-    glBindFramebuffer(GLenum(GL_FRAMEBUFFER), textureContext!.frameBuffer)
-    defer {
-      glBindFramebuffer(GLenum(GL_FRAMEBUFFER), 0)
-    }
-
-    var fbo = mpv_opengl_fbo(
-      fbo: Int32(textureContext!.frameBuffer),
-      w: Int32(size.width),
-      h: Int32(size.height),
-      internal_format: 0
-    )
-    let fboPtr = withUnsafeMutablePointer(to: &fbo) { $0 }
-
-    var params: [mpv_render_param] = [
-      mpv_render_param(type: MPV_RENDER_PARAM_OPENGL_FBO, data: fboPtr),
-      mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
-    ]
-    mpv_render_context_render(renderContext, &params)
-
-    glFlush()
-
-    textureContexts.pushAsReady(textureContext!)
+    CVOpenGLTextureCacheFlush(textureCache, 0)
+    CGLSetCurrentContext(nil)
   }
 
   static private func getProcAddress(

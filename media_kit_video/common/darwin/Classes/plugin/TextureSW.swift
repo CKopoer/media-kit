@@ -18,10 +18,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let handle: OpaquePointer
   private let updateCallback: UpdateCallback
   private var renderContext: OpaquePointer?
-  private var textureContexts = SwappableObjectManager<TextureSWContext>(
-    objects: [],
-    skipCheckArgs: true
-  )
+  private let frames = CompletedFrameStore<CVPixelBuffer>()
 
   init(
     handle: OpaquePointer,
@@ -43,12 +40,10 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
-    let textureContext = textureContexts.current
-    if textureContext == nil {
-      return nil
+    return frames.withCurrent { buffer in
+      guard let buffer = buffer else { return nil }
+      return Unmanaged.passRetained(buffer)
     }
-
-    return Unmanaged.passRetained(textureContext!.pixelBuffer)
   }
 
   private func initMPV() {
@@ -82,52 +77,25 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func resize(_ size: CGSize) {
-    if size.width == 0 || size.height == 0 {
-      return
-    }
-
-    NSLog("TextureSW: resize: \(size.width)x\(size.height)")
-    createPixelBuffer(size)
-  }
-
-  private func createPixelBuffer(_ size: CGSize) {
-    disposePixelBuffer()
-
-    textureContexts.reinit(
-      objects: [
-        TextureSWContext(size: size),
-        TextureSWContext(size: size),
-        TextureSWContext(size: size),
-      ],
-      skipCheckArgs: true
-    )
+    // Keep the previous complete image until the new size has been rendered.
   }
 
   private func disposePixelBuffer() {
-    textureContexts.reinit(objects: [], skipCheckArgs: true)
+    frames.clear()
   }
 
   public func render(_ size: CGSize) {
-    let textureContext = textureContexts.nextAvailable()
-    if textureContext == nil {
-      return
-    }
-
-    CVPixelBufferLockBaseAddress(
-      textureContext!.pixelBuffer,
+    guard size.width > 0 && size.height > 0 else { return }
+    let textureContext = TextureSWContext(size: size)
+    guard CVPixelBufferLockBaseAddress(
+      textureContext.pixelBuffer,
       CVPixelBufferLockFlags(rawValue: 0)
-    )
-    defer {
-      CVPixelBufferUnlockBaseAddress(
-        textureContext!.pixelBuffer,
-        CVPixelBufferLockFlags(rawValue: 0)
-      )
-    }
+    ) == kCVReturnSuccess else { return }
 
     var ssize: [Int32] = [Int32(size.width), Int32(size.height)]
     let format: String = "bgr0"
-    var pitch: Int = CVPixelBufferGetBytesPerRow(textureContext!.pixelBuffer)
-    let buffer = CVPixelBufferGetBaseAddress(textureContext!.pixelBuffer)
+    var pitch: Int = CVPixelBufferGetBytesPerRow(textureContext.pixelBuffer)
+    let buffer = CVPixelBufferGetBaseAddress(textureContext.pixelBuffer)
 
     // pointers
     let ssizePtr = ssize.withUnsafeMutableBytes {
@@ -149,6 +117,10 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
 
     mpv_render_context_render(renderContext, &params)
 
-    textureContexts.pushAsReady(textureContext!)
+    CVPixelBufferUnlockBaseAddress(
+      textureContext.pixelBuffer,
+      CVPixelBufferLockFlags(rawValue: 0)
+    )
+    frames.publish(textureContext.pixelBuffer)
   }
 }

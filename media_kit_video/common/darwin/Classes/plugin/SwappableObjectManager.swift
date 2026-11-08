@@ -1,108 +1,27 @@
 import Foundation
 
-// This class was created to prevent a frameBuffer read by Flutter from being
-// concurrently modified by a write method (mpv's renderer).
-//
-// To do this, two pools are set up, one for frameBuffers available for writing,
-// the other for frameBuffers ready to be read by Flutter.
-//
-// When a frameBuffer has finished being modified and is "pushed", the oldest
-// ready frameBuffer is marked as the current frameBuffer, and the oldest
-// current frameBuffer is placed in the pool of frameBuffers available for
-// writing.
-//
-// The use of at least three frameBuffers ensures that the read and write phases
-// do not overlap, thus eliminating flicker.
-public class SwappableObjectManager<T> {
-  private let lock: NSRecursiveLock = NSRecursiveLock()
-  private var available: [T]
-  private var ready: [T] = []
-  private var _current: T?
+// Only completed, write-once frames enter this store. Retain under the lock so
+// resize/disposal cannot release a frame while the raster thread acquires it.
+// No old frame is returned to a producer-owned reuse pool.
+public final class CompletedFrameStore<T> {
+  private let lock = NSLock()
+  private var current: T?
 
-  init(objects: [T], skipCheckArgs: Bool = false) {
-    if !skipCheckArgs {
-      SwappableObjectManager.checkArgs(objects)
-    }
-
-    available = objects
-  }
-
-  public func reinit(objects: [T], skipCheckArgs: Bool = false) {
-    if !skipCheckArgs {
-      SwappableObjectManager.checkArgs(objects)
-    }
-
+  public func publish(_ frame: T) {
     lock.lock()
-    defer {
-      lock.unlock()
-    }
-
-    available = objects
-    ready = []
-    _current = nil
+    defer { lock.unlock() }
+    current = frame
   }
 
-  public func nextAvailable() -> T? {
+  public func withCurrent<R>(_ read: (T?) -> R) -> R {
     lock.lock()
-    defer {
-      lock.unlock()
-    }
-
-    let object: T? =
-      available.count > 0
-      ? available.removeFirst()
-      : nil
-
-    return object
+    defer { lock.unlock() }
+    return read(current)
   }
 
-  public func pushAsReady(_ object: T) {
+  public func clear() {
     lock.lock()
-    defer {
-      lock.unlock()
-    }
-
-    ready.append(object)
-    updateCurrent()
-  }
-
-  public var current: T? {
-    lock.lock()
-    defer {
-      lock.unlock()
-    }
-
-    return _current
-  }
-
-  private func updateCurrent() {
-    lock.lock()
-    defer {
-      lock.unlock()
-    }
-
-    let next: T? =
-      ready.count > 0
-      ? ready.removeFirst()
-      : nil
-
-    if next == nil {
-      return
-    }
-
-    let old: T? = _current
-    _current = next
-
-    if old == nil {
-      return
-    }
-
-    available.append(old!)
-  }
-
-  static private func checkArgs(_ objects: [T]) {
-    if objects.count < 2 {
-      NSLog("SwappableObjectManager: require at least two objects to work")
-    }
+    defer { lock.unlock() }
+    current = nil
   }
 }

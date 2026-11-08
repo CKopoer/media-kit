@@ -13,6 +13,7 @@ struct _TextureSW {
   guint32 current_width;
   guint32 current_height;
   VideoOutput* video_output;
+  guint8* snapshot;
 };
 
 G_DEFINE_TYPE(TextureSW, texture_sw, fl_pixel_buffer_texture_get_type())
@@ -21,9 +22,12 @@ static void texture_sw_init(TextureSW* self) {
   self->current_width = 1;
   self->current_height = 1;
   self->video_output = NULL;
+  self->snapshot = NULL;
 }
 
 static void texture_sw_dispose(GObject* object) {
+  auto* self = TEXTURE_SW(object);
+  g_clear_pointer(&self->snapshot, g_free);
   G_OBJECT_CLASS(texture_sw_parent_class)->dispose(object);
 }
 
@@ -45,26 +49,22 @@ gboolean texture_sw_copy_pixels(FlPixelBufferTexture* texture,
                                 GError** error) {
   TextureSW* self = TEXTURE_SW(texture);
   VideoOutput* video_output = self->video_output;
-  const gint64 output_width = video_output_get_width(video_output);
-  const gint64 output_height = video_output_get_height(video_output);
-  if (output_width <= 0 || output_height <= 0 ||
-      output_width > G_MAXINT32 || output_height > G_MAXINT32) {
-    return TRUE;
-  }
-  const auto required_width = static_cast<guint32>(output_width);
-  const auto required_height = static_cast<guint32>(output_height);
-  if (required_width > 0 && required_height > 0) {
-    guint8* pixel_buffer = video_output_get_pixel_buffer(video_output);
-    if (self->current_width != required_width ||
-        self->current_height != required_height) {
-      self->current_width = required_width;
-      self->current_height = required_height;
-      // Notify Flutter about the change in texture's dimensions.
+  guint8* copy = NULL;
+  guint32 frame_width = 0, frame_height = 0;
+  if (video_output_copy_pixel_buffer(video_output, &copy, &frame_width, &frame_height)) {
+    g_free(self->snapshot);
+    self->snapshot = copy;
+    if (self->current_width != frame_width || self->current_height != frame_height) {
+      self->current_width = frame_width;
+      self->current_height = frame_height;
       video_output_notify_texture_update(video_output);
     }
-    *buffer = pixel_buffer;
-    *width = required_width;
-    *height = required_height;
   }
+  // Flutter uploads after this callback unlocks the producer. Only the raster
+  // callback owns this snapshot; the native renderer never writes these bytes.
+  if (self->snapshot == NULL) return FALSE;
+  *buffer = self->snapshot;
+  *width = self->current_width;
+  *height = self->current_height;
   return TRUE;
 }

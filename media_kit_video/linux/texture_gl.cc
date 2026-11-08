@@ -131,7 +131,10 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
                                      GError** error) {
   TextureGL* self = TEXTURE_GL(texture);
   VideoOutput* video_output = self->video_output;
-  
+  // Finish Flutter's submitted reads BEFORE another context resizes or writes
+  // the same EGLImage. Populate runs on Flutter's current raster context.
+  glFinish();
+
   const gint64 output_width = video_output_get_width(video_output);
   const gint64 output_height = video_output_get_height(video_output);
   if (output_width <= 0 || output_height <= 0 ||
@@ -197,8 +200,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
       glBindFramebuffer(GL_FRAMEBUFFER, 0);
       glBindTexture(GL_TEXTURE_2D, 0);
       
-      // Flush to ensure mpv's texture is ready
-      glFlush();
+      // Complete allocation before the other context imports the EGLImage.
+      glFinish();
       
       // Switch back to Flutter's context to create/update Flutter's texture
       eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);
@@ -260,8 +263,8 @@ gboolean texture_gl_populate_texture(FlTextureGL* texture,
     // Unbind FBO
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     
-    // Flush to ensure rendering is complete
-    glFlush();
+    // Complete producer writes before Flutter samples the shared EGLImage.
+    glFinish();
     
     // Restore Flutter's context
     eglMakeCurrent(flutter_display, flutter_draw, flutter_read, flutter_context);

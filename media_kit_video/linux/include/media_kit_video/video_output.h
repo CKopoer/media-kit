@@ -98,7 +98,9 @@ EGLContext video_output_get_egl_context(VideoOutput* self);
 
 EGLSurface video_output_get_egl_surface(VideoOutput* self);
 
-guint8* video_output_get_pixel_buffer(VideoOutput* self);
+// Caller owns the returned immutable pixel copy; dimensions belong to that frame.
+gboolean video_output_copy_pixel_buffer(VideoOutput* self, guint8** buffer,
+                                        guint32* width, guint32* height);
 
 gint64 video_output_get_width(VideoOutput* self);
 
