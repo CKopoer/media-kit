@@ -1,3 +1,4 @@
+import Foundation
 import FlutterMacOS
 import OpenGL.GL
 import OpenGL.GL3
