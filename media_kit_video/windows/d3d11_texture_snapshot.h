@@ -29,9 +29,14 @@ class D3D11TextureSnapshot {
   using Frame = std::shared_ptr<const D3D11TextureFrame>;
 
   Frame Capture(ID3D11Texture2D* source, uint64_t revision) {
+    const auto deadline = std::chrono::steady_clock::now() +
+                          std::chrono::milliseconds(2);
     if (pending_) {
-      Complete();
-      return current_;
+      Complete(deadline);
+      if (pending_) return current_;
+      // A newer render/resize may have arrived while the old copy was pending.
+      // Queue it now, even when playback has paused and no new render will wake
+      // Flutter. Both completion polls share the same raster-thread wait budget.
     }
     if (current_ && current_->revision == revision) return current_;
 
@@ -56,7 +61,7 @@ class D3D11TextureSnapshot {
     context_->CopyResource(pending_->texture.Get(), source);
     context_->End(query_.Get());
     context_->Flush();
-    Complete();
+    Complete(deadline);
     return current_;
   }
 
@@ -64,11 +69,9 @@ class D3D11TextureSnapshot {
   Frame current() const { return current_; }
 
  private:
-  void Complete() {
+  void Complete(std::chrono::steady_clock::time_point deadline) {
     // Flush submits work; an EVENT query proves the copy actually completed.
     // Bound raster-thread waiting and keep one pending allocation for retries.
-    const auto deadline = std::chrono::steady_clock::now() +
-                          std::chrono::milliseconds(2);
     HRESULT result;
     do {
       result = context_->GetData(query_.Get(), nullptr, 0,
