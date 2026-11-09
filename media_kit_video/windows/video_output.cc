@@ -9,6 +9,8 @@
 #include "video_output.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <stdexcept>
 
 // Limit the frame size to 1080p in software rendering.
 // This is for performance reasons & to avoid allocating too much memory.
@@ -31,86 +33,17 @@ VideoOutput::VideoOutput(int64_t handle,
   // |ANGLESurfaceManager| & libmpv render context creation can conflict with
   // the existing |Render| or |Resize| calls from another |VideoOutput|
   // instances (which will result in access violation).
-  auto future = thread_pool_ref_->Post([&]() {
-    mpv_set_option_string(handle_, "video-sync", "audio");
-    mpv_set_option_string(handle_, "video-timing-offset", "0");
-    // First try to initialize video playback with hardware acceleration &
-    // |ANGLESurfaceManager|, use S/W API as fallback.
-    auto is_hardware_acceleration_enabled = false;
-    // Attempt to use H/W rendering.
-    if (configuration.enable_hardware_acceleration) {
-      try {
-        // OpenGL context needs to be set before |mpv_render_context_create|.
-        surface_manager_ = std::make_unique<ANGLESurfaceManager>(
-            static_cast<int32_t>(width_.value_or(1)),
-            static_cast<int32_t>(height_.value_or(1)));
-        surface_manager_->MakeCurrent(true);
-        Resize(width_.value_or(1), height_.value_or(1));
-        mpv_opengl_init_params gl_init_params{
-            [](auto, auto name) {
-              return reinterpret_cast<void*>(eglGetProcAddress(name));
-            },
-            nullptr,
-        };
-        mpv_render_param params[] = {
-            {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
-            {MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, &gl_init_params},
-            {MPV_RENDER_PARAM_INVALID, nullptr},
-        };
-        // Create render context.
-        if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
-          mpv_render_context_set_update_callback(
-              render_context_,
-              [](void* context) {
-                // Notify Flutter that a new frame is available. The actual
-                // rendering will take place in the |Render| method, which will
-                // be called by Flutter on the render thread.
-                auto that = reinterpret_cast<VideoOutput*>(context);
-                that->NotifyRender();
-              },
-              reinterpret_cast<void*>(this));
-          // Set flag to true, indicating that H/W rendering is supported.
-          is_hardware_acceleration_enabled = true;
-          std::cout << "media_kit: VideoOutput: Using H/W rendering."
-                    << std::endl;
-        }
-      } catch (...) {
-        // Do nothing.
-        // Likely received an |std::runtime_error| from |ANGLESurfaceManager|,
-        // which indicates that H/W rendering is not supported.
-      }
-    }
-    if (!is_hardware_acceleration_enabled) {
-      std::cout << "media_kit: VideoOutput: Using S/W rendering." << std::endl;
-      // Allocate a "large enough" buffer ahead of time.
-      pixel_buffer_ =
-          std::make_unique<uint8_t[]>(SW_RENDERING_PIXEL_BUFFER_SIZE);
-      Resize(width_.value_or(1), height_.value_or(1));
-      mpv_render_param params[] = {
-          {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_SW},
-          {MPV_RENDER_PARAM_INVALID, nullptr},
-      };
-      if (mpv_render_context_create(&render_context_, handle_, params) == 0) {
-        mpv_render_context_set_update_callback(
-            render_context_,
-            [](void* context) {
-              // Notify Flutter that a new frame is available. The actual
-              // rendering will take place in the |Render| method, which will be
-              // called by Flutter on the render thread.
-              auto that = reinterpret_cast<VideoOutput*>(context);
-              that->NotifyRender();
-            },
-            reinterpret_cast<void*>(this));
-      }
-    }
-  });
-  future.wait();
+  auto future = thread_pool_ref_->Post([this]() { Initialize(); });
+  // Propagate initialization errors to Create's platform-channel reply.
+  future.get();
 }
+
+#include "video_output_initialize.inc"
 
 #include "video_output_dispose.inc"
 
 void VideoOutput::Render() {
-  if (destroyed_) return;
+  if (destroyed_ || render_context_ == nullptr) return;
   std::lock_guard<std::mutex> lock(textures_mutex_);
   if (texture_id_) {
     // H/W
@@ -128,14 +61,14 @@ void VideoOutput::Render() {
         };
         mpv_render_context_render(render_context_, params);
       });
-    }
-    // S/W
-    if (pixel_buffer_ != nullptr) {
+    } else if (pixel_buffer_ != nullptr) {
+      // S/W
       int32_t size[]{
           static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->width),
           static_cast<int32_t>(pixel_buffer_textures_.at(texture_id_)->height),
       };
-      auto pitch = 4 * size[0];
+      // libmpv reads a size_t*, including on Windows ARM64 and x64.
+      std::size_t pitch = 4 * static_cast<std::size_t>(size[0]);
       mpv_render_param params[]{
           {MPV_RENDER_PARAM_SW_SIZE, size},
           {MPV_RENDER_PARAM_SW_FORMAT, "rgb0"},

@@ -1,5 +1,14 @@
 # BiliSail 原生媒体依赖
 
+2026-11-09 更新：Windows ARM64 SDK 改为已启用 OpenGL／ANGLE 的 0.41.0 LGPL
+构建，替换旧归档中 `gl=disabled` 的 DLL；源码、构建材料、逐文件摘要和许可见
+[ARM64 说明](../libs/windows/media_kit_libs_windows_video/windows/arm64/SOURCE.md)。
+旧归档和 Vulkan loader 不再参与该目标。库插件和应用均在构建前检查实际 DLL 的
+`gl`／`egl-angle` 编译能力；DLL 可加载或 PE 架构正确不能代替该检查。
+视频初始化在选择渲染器后才注册纹理，失败的 GPU 状态不会进入软件输出；初始化
+失败经平台通道返回，软件 stride 使用 `size_t`。原生回归入口增加初始化和软件
+render API 检查。按本次授权只做离线检查，未构建应用或执行 ARM64 设备播放。
+
 2026-11-07。Dart 核心、视频插件和各平台库插件以官方 `c533e446755f51cf53c7e57aea873f2aa5355f81` 为基线，由 `CKopoer/media-kit` 维护。mpv 源码由 [CKopoer/mpv](https://github.com/CKopoer/mpv) 维护。
 
 ## 固定资产

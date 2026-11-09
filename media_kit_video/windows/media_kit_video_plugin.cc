@@ -67,6 +67,8 @@ void MediaKitVideoPlugin::HandleMethodCall(
     configuration_value.enable_hardware_acceleration =
         configuration_enable_hardware_acceleration;
 
+    auto reply = std::shared_ptr<flutter::MethodResult<flutter::EncodableValue>>(
+        std::move(result));
     video_output_manager_->Create(
         handle_value, configuration_value,
         [this, channel_ptr = channel_.get(), handle = handle_value](
@@ -107,8 +109,17 @@ void MediaKitVideoPlugin::HandleMethodCall(
               }),
               nullptr);
           });
+        },
+        [this, reply](bool created) {
+          RunOnMainThread([reply, created] {
+            if (created) {
+              reply->Success(flutter::EncodableValue(std::monostate{}));
+            } else {
+              reply->Error("video_output_initialization_failed",
+                           "Unable to initialize a video renderer.");
+            }
+          });
         });
-    result->Success(flutter::EncodableValue(std::monostate{}));
   } else if (method_call.method_name().compare("VideoOutputManager.Dispose") ==
              0) {
     auto arguments = std::get<flutter::EncodableMap>(*method_call.arguments());

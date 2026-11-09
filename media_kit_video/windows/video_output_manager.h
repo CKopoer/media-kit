@@ -31,7 +31,8 @@ class VideoOutputManager {
   void Create(
       int64_t handle,
       VideoOutputConfiguration configuration,
-      std::function<void(int64_t, int64_t, int64_t)> texture_update_callback);
+      std::function<void(int64_t, int64_t, int64_t)> texture_update_callback,
+      std::function<void(bool)> on_created);
 
   // Sets the required video output size.
   // This forces |VideoOutput| to resize the internal OpenGL surface / D3D

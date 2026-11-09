@@ -82,6 +82,7 @@ class VideoOutput {
   void SetViewportSize(std::optional<int64_t> width, std::optional<int64_t> height, uint64_t revision);
 
  private:
+  void Initialize();
   void UnregisterTexture(int64_t id, std::function<void()> callback);
 
   void NotifyRender();

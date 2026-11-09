@@ -166,7 +166,7 @@ class NativeVideoController extends PlatformVideoController {
     final completer = Completer<void>();
     void listener() {
       final value = controller.id.value;
-      if (value != null) {
+      if (value != null && !completer.isCompleted) {
         debugPrint('NativeVideoController: Texture ID: $value');
         completer.complete();
       }
@@ -174,21 +174,24 @@ class NativeVideoController extends PlatformVideoController {
 
     controller.id.addListener(listener);
 
-    await _channel.invokeMethod(
-      'VideoOutputManager.Create',
-      {
-        'handle': handle.toString(),
-        'configuration': {
-          'width': configuration.width.toString(),
-          'height': configuration.height.toString(),
-          'enableHardwareAcceleration':
-              configuration.enableHardwareAcceleration,
+    try {
+      await _channel.invokeMethod(
+        'VideoOutputManager.Create',
+        {
+          'handle': handle.toString(),
+          'configuration': {
+            'width': configuration.width.toString(),
+            'height': configuration.height.toString(),
+            'enableHardwareAcceleration':
+                configuration.enableHardwareAcceleration,
+          },
         },
-      },
-    );
+      );
 
-    await completer.future;
-    controller.id.removeListener(listener);
+      await completer.future;
+    } finally {
+      controller.id.removeListener(listener);
+    }
 
     // Return the [VideoController].
     return controller;

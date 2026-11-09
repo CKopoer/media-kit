@@ -22,8 +22,11 @@
     "license": "mpv LGPL-2.1-or-later; FFmpeg LGPL-3.0-or-later; dependency licenses apply separately"
   },
   "windowsArm64": {
-    "repository": "https://github.com/CKopoer/mpv-winbuild",
-    "commit": "aa2c65f15129c3d94852cc0fcd719358f3d47aa6",
-    "upstreamBuildCommit": "8a39c5134b8e16f104ee56a5d85e36a592ad9477"
+    "repository": "https://github.com/Carapacik/libmpv-win32-video-cmake",
+    "commit": "6b921819019b11a84554e4c65c280d2676a15dd8",
+    "run": "https://github.com/Carapacik/libmpv-win32-video-cmake/actions/runs/41145159656",
+    "mpv": "41f6a645068483470267271e1d09966ca3b9f413",
+    "ffmpeg": "n9.0.2",
+    "license": "mpv LGPL-2.1-or-later; FFmpeg LGPL-3.0-or-later; dependency licenses apply separately"
   }
 }

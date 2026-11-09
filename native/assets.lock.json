@@ -277,26 +277,20 @@
       "sha256": "068960e89211f2adc80af03f637fa393fb5e407d3dd23592c8fe8c5490bb7ae4"
     },
     {
-      "name": "mpv-dev-lgpl-aarch64-20261012-git-88eb9f2e73.7z",
-      "origin": "https://github.com/zhongfly/mpv-winbuild/releases/download/2026-10-12-88eb9f2e73/mpv-dev-lgpl-aarch64-20261012-git-88eb9f2e73.7z",
-      "url": "https://github.com/CKopoer/media-kit/releases/download/native-windows-arm64-2026-11-07/mpv-dev-lgpl-aarch64-20261012-git-88eb9f2e73.7z",
-      "sha256": "bdffd1f6c2ce4f083bea6fd8c0dec845065468ba7d0426c23cb9b09c8b540b86"
+      "name": "mpv-dev-aarch64-20261031-git-41f6a64506.7z",
+      "origin": "https://github.com/Carapacik/libmpv-win32-video-cmake/releases/download/20261031/mpv-dev-aarch64-20261031-git-41f6a64506.7z",
+      "url": "https://github.com/CKopoer/media-kit/releases/download/native-windows-arm64-2026-11-07/mpv-dev-aarch64-20261031-git-41f6a64506.7z",
+      "sha256": "497841ee27697d816ff3aa14a0e1cce0ce639b593d28b53fb4e06e4410c37df6"
     },
     {
       "name": "angle-windows-arm64-a96fca8d5ee2ca61e8de419e38cd577579281c9e.tar.gz",
       "origin": "https://github.com/yorickreum/angle-libs/releases/download/a96fca8/angle-windows-arm64-a96fca8d5ee2ca61e8de419e38cd577579281c9e.tar.gz",
       "url": "https://github.com/CKopoer/media-kit/releases/download/native-windows-arm64-2026-11-07/angle-windows-arm64-a96fca8d5ee2ca61e8de419e38cd577579281c9e.tar.gz",
       "sha256": "f7f122533644ec0dd1f52f0117b9fa57ceb3f69dff3359579028ff4008f74f69"
-    },
-    {
-      "name": "mingw-w64-clang-aarch64-vulkan-loader-1.1.4.357.0-1-any.pkg.tar.zst",
-      "origin": "https://mirror.msys2.org/mingw/clangarm64/mingw-w64-clang-aarch64-vulkan-loader-1~1.4.357.0-1-any.pkg.tar.zst",
-      "url": "https://github.com/CKopoer/media-kit/releases/download/native-windows-arm64-2026-11-07/mingw-w64-clang-aarch64-vulkan-loader-1.1.4.357.0-1-any.pkg.tar.zst",
-      "sha256": "1a5e4c82fc568b83b2e2cbb1e9145d61bda15ed6e2d9f6fdfb96e674aaed49b9"
     }
   ],
   "darwinSource": "f4210f84906c3b00a65fba198c8127b6757b9350",
   "linuxSource": "41f6a645068483470267271e1d09966ca3b9f413",
-  "windowsArm64Source": "88eb9f2e73945d8bc9c133a2f67babaa9af34680",
+  "windowsArm64Source": "41f6a645068483470267271e1d09966ca3b9f413",
   "windowsX64Release": "native-windows-hwdec-edges-2026-11-07"
 }
