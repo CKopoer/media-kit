@@ -76,17 +76,19 @@ void ANGLESurfaceManager::Create() {
 }
 
 void ANGLESurfaceManager::CleanUp(bool release_context) {
-  if (release_context) {
-    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
-      eglReleaseTexImage(display_, surface_, EGL_BACK_BUFFER);
-    }
-    if (display_ != EGL_NO_DISPLAY && context_ != EGL_NO_CONTEXT) {
-      eglDestroyContext(display_, context_);
-      context_ = EGL_NO_CONTEXT;
-    }
+  if (display_ != EGL_NO_DISPLAY) {
+    // Unbind before destroying the old draw surface. Keeping context_ current
+    // without a surface requires EGL_KHR_surfaceless_context unnecessarily.
+    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     if (surface_ != EGL_NO_SURFACE) {
       eglDestroySurface(display_, surface_);
       surface_ = EGL_NO_SURFACE;
+    }
+  }
+  if (release_context) {
+    if (display_ != EGL_NO_DISPLAY && context_ != EGL_NO_CONTEXT) {
+      eglDestroyContext(display_, context_);
+      context_ = EGL_NO_CONTEXT;
     }
     // EGL's default display can also belong to Flutter. Contexts and surfaces
     // are released above; do not terminate another component's live display.
@@ -100,13 +102,6 @@ void ANGLESurfaceManager::CleanUp(bool release_context) {
       d3d_11_device_->Release();
       d3d_11_device_ = nullptr;
     }
-  } else {
-    // Clear context & destroy existing |surface_|.
-    eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, context_);
-    if (display_ != EGL_NO_DISPLAY && surface_ != EGL_NO_SURFACE) {
-      eglDestroySurface(display_, surface_);
-    }
-    surface_ = EGL_NO_SURFACE;
   }
   // Release D3D 11 texture(s).
   if (internal_d3d_11_texture_2D_) {
@@ -227,11 +222,10 @@ bool ANGLESurfaceManager::CreateAndBindEGLSurface() {
   if (surface_ == EGL_NO_SURFACE) {
     FAIL("eglCreatePbufferFromClientBuffer");
   }
-  GLuint t;
-  glGenTextures(1, &t);
-  glBindTexture(GL_TEXTURE_2D, t);
-  eglBindTexImage(display_, surface_, EGL_BACK_BUFFER);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  // This is the producer's default framebuffer, made current by Draw().
+  // eglBindTexImage is for a consumer sampling a pbuffer: EGL forbids writes
+  // to that surface until eglReleaseTexImage. In particular, binding here
+  // after the first decoded-size resize leaves subsequent mpv draws undefined.
+  // Flutter imports the completed D3D11 snapshot in its own EGL context.
   return true;
 }

@@ -1,5 +1,15 @@
 # BiliSail 原生媒体依赖
 
+2026-11-12：Windows ANGLE 的生产者 pbuffer 不再调用 `eglBindTexImage`。
+该调用将表面绑定用于采样，EGL 规定释放绑定前向它绘制的结果未定义；
+原尺寸变更路径使上下文保持 current，因而在首次视频尺寸到达后触发此缺陷。
+生产者继续绘制默认 framebuffer，Flutter 独立导入已完成的 D3D11 快照。
+重建／释放表面前解除 current，上下文在 resize 时保留，不要求 surfaceless 支持。
+`python native/test_windows_egl_surface.py` 编译实际生产方法，覆盖首次尺寸变更、
+连续缩放、其他 current context 和释放；旧代码在 writable-surface 断言失败。
+此为 EGL 契约回归，不能代替 Surface Pro X／Windows ARM64 的真实显示验收。
+没有改变解码选择、GPU 输出默认值或原生 SDK。
+
 2026-11-09 更新：Windows ARM64 SDK 改为已启用 OpenGL／ANGLE 的 0.41.0 LGPL
 构建，替换旧归档中 `gl=disabled` 的 DLL；源码、构建材料、逐文件摘要和许可见
 [ARM64 说明](../libs/windows/media_kit_libs_windows_video/windows/arm64/SOURCE.md)。
