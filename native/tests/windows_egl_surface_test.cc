@@ -20,9 +20,11 @@ constexpr int EGL_NO_DISPLAY = 0, EGL_NO_SURFACE = 0, EGL_NO_CONTEXT = 0;
 constexpr int EGL_FALSE = 0, EGL_TRUE = 1, EGL_NONE = 2;
 constexpr int EGL_WIDTH = 3, EGL_HEIGHT = 4, EGL_TEXTURE_TARGET = 5;
 constexpr int EGL_TEXTURE_2D = 6, EGL_TEXTURE_FORMAT = 7, EGL_TEXTURE_RGBA = 8;
-constexpr int EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE = 9, EGL_BACK_BUFFER = 10;
-constexpr int GL_TEXTURE_2D = 11, GL_TEXTURE_MIN_FILTER = 12;
-constexpr int GL_TEXTURE_MAG_FILTER = 13, GL_NEAREST = 14;
+constexpr int EGL_D3D_TEXTURE_2D_SHARE_HANDLE_ANGLE = 9;
+// Retain the old sampling API for compiling pre-fix production methods too.
+[[maybe_unused]] constexpr int EGL_BACK_BUFFER = 10;
+[[maybe_unused]] constexpr int GL_TEXTURE_2D = 11, GL_TEXTURE_MIN_FILTER = 12;
+[[maybe_unused]] constexpr int GL_TEXTURE_MAG_FILTER = 13, GL_NEAREST = 14;
 
 struct Image {
   bool sampled = false;
