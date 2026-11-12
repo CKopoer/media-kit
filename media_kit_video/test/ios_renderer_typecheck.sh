@@ -20,6 +20,22 @@ public protocol FlutterTextureRegistry: AnyObject {
   func unregisterTexture(_ textureId: Int64)
   func textureFrameAvailable(_ textureId: Int64)
 }
+public protocol FlutterPlugin {}
+public protocol FlutterPluginRegistrar {
+  func messenger() -> Int
+  func textures() -> FlutterTextureRegistry
+  func addMethodCallDelegate(_ plugin: FlutterPlugin, channel: FlutterMethodChannel)
+}
+public typealias FlutterResult = (Any?) -> Void
+public struct FlutterMethodCall {
+  public let method: String
+  public let arguments: Any?
+}
+public let FlutterMethodNotImplemented = "not-implemented"
+public final class FlutterMethodChannel {
+  public init(name: String, binaryMessenger: Int) {}
+  public func invokeMethod(_ method: String, arguments: Any?) {}
+}
 SWIFT
 xcrun swiftc -sdk "$sdk_path" -target "$target" -swift-version 5 \
   -emit-module -module-name Flutter "$scratch_dir/Flutter.swift" \
@@ -39,6 +55,7 @@ xcrun swiftc -typecheck -sdk "$sdk_path" -target "$target" -swift-version 5 \
   "$common/TextureSWContext.swift" "$common/TextureSW.swift" \
   "$common/VideoOutputConfiguration.swift" "$common/VideoOutput.swift" \
   "$common/VideoOutputManager.swift" \
+  "$common/UtilsProtocol.swift" "$common/MediaKitVideoPlugin.swift" \
   "$plugin/gles/OpenGLESHelpers.swift" "$plugin/gles/TextureGLESContext.swift" \
   "$plugin/TextureHW.swift"
 echo 'iOS arm64 renderer typecheck passed with Apple SDK and pinned mpv headers'
