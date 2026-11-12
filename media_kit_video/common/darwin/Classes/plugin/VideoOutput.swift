@@ -37,7 +37,14 @@ public class VideoOutput: NSObject {
   private var texture: ResizableTextureProtocol!
   private var textureId: Int64 = -1
   private var currentSize: CGSize = CGSize.zero
-  private var disposed: Bool = false
+  private let stateLock = NSLock()
+  private var closing = false
+  private var closed = false
+  private var closeCallbacks = [() -> Void]()
+  private var notificationPending = false
+  private var latestSize = CGSize.zero
+  // Platform-thread only. All rendering dimensions above remain worker-owned.
+  private var platformSize = CGSize.zero
 
   init(
     handle: Int64,
@@ -57,26 +64,29 @@ public class VideoOutput: NSObject {
 
     super.init()
 
-    worker.enqueue {
-      self._init()
+    worker.enqueue(key: "initialize") { [weak self] in
+      self?._init()
     }
   }
 
   deinit {
-    worker.cancel()
-
-    disposed = true
-    disposeTextureId()
+    // Fallback for a manager/engine being torn down without an explicit close.
+    let texture = self.texture
+    worker.finish { texture?.dispose() }
+    let registry = self.registry
+    let id = textureId
+    if id >= 0 { DispatchQueue.main.async { registry.unregisterTexture(id) } }
   }
 
   public func setSize(width: Int64?, height: Int64?) {
-    worker.enqueue {
-      self.width = width
-      self.height = height
+    worker.enqueue(key: "size") { [weak self] in
+      self?.width = width
+      self?.height = height
     }
   }
 
   private func _init() {
+    guard !isClosing else { return }
     let enableHardwareAcceleration =
       VideoOutput.isSimulator ? false : enableHardwareAcceleration
 
@@ -118,7 +128,7 @@ public class VideoOutput: NSObject {
       )
     }
 
-    DispatchQueue.main.sync { [weak self]() in
+    DispatchQueue.main.async { [weak self]() in
       guard let that = self else {
         return
       }
@@ -128,29 +138,53 @@ public class VideoOutput: NSObject {
 
   // Must be run on the main thread
   private func registerTextureId() {
+    guard !isClosing else { return }
     // Textures must be registered on the platform thread.
     textureId = registry.register(texture)
     // textureUpdateCallback must run on the main thread
     textureUpdateCallback(textureId, CGSize(width: 0, height: 0))
   }
 
-  private func disposeTextureId() {
-    let registry_ = self.registry
-    let textureId_ = self.textureId
-    textureId = -1
-    DispatchQueue.main.async {
-      // Textures must be unregistered on the platform thread
-      registry_.unregisterTexture(textureId_)
+  public func dispose(completion: @escaping () -> Void) {
+    let state = locked { () -> (closed: Bool, start: Bool) in
+      if closed { return (true, false) }
+      closeCallbacks.append(completion)
+      if closing { return (false, false) }
+      closing = true
+      return (false, true)
+    }
+    if state.closed {
+      DispatchQueue.main.async(execute: completion)
+    } else if state.start {
+      worker.finish {
+        self.texture?.dispose()
+        self.texture = nil
+        DispatchQueue.main.async {
+          if self.textureId >= 0 {
+            self.registry.unregisterTexture(self.textureId)
+            self.textureId = -1
+          }
+          let callbacks = self.locked { () -> [() -> Void] in
+            self.closed = true
+            let callbacks = self.closeCallbacks
+            self.closeCallbacks.removeAll()
+            return callbacks
+          }
+          callbacks.forEach { $0() }
+        }
+      }
     }
   }
 
   public func updateCallback() {
-    worker.enqueue {
-      self._updateCallback()
+    guard !isClosing else { return }
+    worker.enqueue(key: "render") { [weak self] in
+      self?._updateCallback()
     }
   }
 
   private func _updateCallback() {
+    guard !isClosing else { return }
     let size = videoSize
 
     if size.width == 0 || size.height == 0 {
@@ -161,23 +195,38 @@ public class VideoOutput: NSObject {
       currentSize = size
 
       texture.resize(size)
-      DispatchQueue.main.sync { [weak self] in
-        guard let that = self else { return }
-        // textureUpdateCallback must run on the main thread
-        that.textureUpdateCallback(that.textureId, size)
-      }
-    }
-
-    if disposed {
-      return
     }
 
     texture.render(size)
-    DispatchQueue.main.sync { [weak self] in
+    let notify = locked { () -> Bool in
+      guard !closing else { return false }
+      latestSize = size
+      guard !notificationPending else { return false }
+      notificationPending = true
+      return true
+    }
+    guard notify else { return }
+    DispatchQueue.main.async { [weak self] in
       guard let that = self else { return }
-      // Textures must be marked as available from the main thread
+      let size = that.locked { () -> CGSize? in
+        that.notificationPending = false
+        return that.closing ? nil : that.latestSize
+      }
+      guard let size = size, that.textureId >= 0 else { return }
+      if that.platformSize != size {
+        that.platformSize = size
+        that.textureUpdateCallback(that.textureId, size)
+      }
       that.registry.textureFrameAvailable(that.textureId)
     }
+  }
+
+  private var isClosing: Bool { locked { closing } }
+
+  private func locked<T>(_ body: () -> T) -> T {
+    stateLock.lock()
+    defer { stateLock.unlock() }
+    return body()
   }
 
     private var videoSize: CGSize {

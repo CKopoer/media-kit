@@ -17,6 +17,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let textureCache: CVOpenGLTextureCache
   private var renderContext: OpaquePointer?
   private let frames = CompletedFrameStore<CVPixelBuffer>()
+  private var disposed = false
 
   init(
     handle: OpaquePointer,
@@ -34,16 +35,19 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   deinit {
+    dispose()
+    OpenGLHelpers.deletePixelFormat(pixelFormat)
+    OpenGLHelpers.deleteContext(context)
+  }
+
+  public func dispose() {
+    guard !disposed else { return }
+    disposed = true
     disposePixelBuffer()
     disposeMPV()
+    CGLSetCurrentContext(context)
     OpenGLHelpers.deleteTextureCache(textureCache)
-    OpenGLHelpers.deletePixelFormat(pixelFormat)
-
-    // Deleting the context may cause potential RAM or VRAM memory leaks, as it
-    // is used in the `deinit` method of the `TextureGLContext`.
-    // Potential fix: use a counter, and delete it only when the counter reaches
-    // zero
-    OpenGLHelpers.deleteContext(context)
+    CGLSetCurrentContext(nil)
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
@@ -93,15 +97,14 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       renderContext,
       { (ctx) in
         let that = unsafeBitCast(ctx, to: TextureHW.self)
-        DispatchQueue.main.async {
-          that.updateCallback()
-        }
+        that.updateCallback()
       },
       UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
     )
   }
 
   private func disposeMPV() {
+    guard let renderContext = renderContext else { return }
     CGLSetCurrentContext(context)
     defer {
       OpenGLHelpers.checkError("disposeMPV")
@@ -110,6 +113,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
 
     mpv_render_context_set_update_callback(renderContext, nil, nil)
     mpv_render_context_free(renderContext)
+    self.renderContext = nil
   }
 
   public func resize(_ size: CGSize) {
@@ -121,7 +125,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func render(_ size: CGSize) {
-    guard size.width > 0 && size.height > 0 else { return }
+    guard !disposed, size.width > 0 && size.height > 0 else { return }
     autoreleasepool {
       // Each published IOSurface is write-once. Three buffers cannot prove that
       // Flutter's Metal queue has finished sampling an older surface.

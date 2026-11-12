@@ -5,18 +5,20 @@ import Foundation
 public class TextureSWContext {
   public let pixelBuffer: CVPixelBuffer
 
-  init(size: CGSize) {
-    self.pixelBuffer = TextureSWContext.createPixelBuffer(size)
+  init?(size: CGSize) {
+    guard let buffer = TextureSWContext.createPixelBuffer(size) else { return nil }
+    self.pixelBuffer = buffer
   }
 
   deinit {
     TextureSWContext.disposePixelBuffer(pixelBuffer)
   }
 
-  private static func createPixelBuffer(_ size: CGSize) -> CVPixelBuffer {
+  private static func createPixelBuffer(_ size: CGSize) -> CVPixelBuffer? {
     let attrs =
       [
-        kCVPixelBufferMetalCompatibilityKey: true
+        kCVPixelBufferMetalCompatibilityKey: true,
+        kCVPixelBufferIOSurfacePropertiesKey: [:],
       ] as CFDictionary
 
     var pixelBuffer: CVPixelBuffer?
@@ -28,9 +30,8 @@ public class TextureSWContext {
       attrs,
       &pixelBuffer
     )
-    assert(cvret == kCVReturnSuccess, "CVPixelBufferCreate")
-
-    return pixelBuffer!
+    guard cvret == kCVReturnSuccess else { return nil }
+    return pixelBuffer
   }
 
   private static func disposePixelBuffer(_ pixelBuffer: CVPixelBuffer) {

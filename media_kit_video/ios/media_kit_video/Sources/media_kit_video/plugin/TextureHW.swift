@@ -15,6 +15,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let textureCache: CVOpenGLESTextureCache
   private var renderContext: OpaquePointer?
   private let frames = CompletedFrameStore<CVPixelBuffer>()
+  private var disposed = false
 
   init(
     handle: OpaquePointer,
@@ -31,15 +32,19 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   deinit {
+    dispose()
+    OpenGLESHelpers.deleteContext(context)
+  }
+
+  public func dispose() {
+    guard !disposed else { return }
+    disposed = true
     disposePixelBuffer()
     disposeMPV()
+    let previousContext = EAGLContext.current()
+    EAGLContext.setCurrent(context)
     OpenGLESHelpers.deleteTextureCache(textureCache)
-
-    // Deleting the context may cause potential RAM or VRAM memory leaks, as it
-    // is used in the `deinit` method of the `TextureGLESContext`.
-    // Potential fix: use a counter, and delete it only when the counter reaches
-    // zero
-    OpenGLESHelpers.deleteContext(context)
+    EAGLContext.setCurrent(previousContext)
   }
 
   public func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>? {
@@ -83,15 +88,14 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       renderContext,
       { (ctx) in
         let that = unsafeBitCast(ctx, to: TextureHW.self)
-        DispatchQueue.main.async {
-          that.updateCallback()
-        }
+        that.updateCallback()
       },
       UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
     )
   }
 
   private func disposeMPV() {
+    guard let renderContext = renderContext else { return }
     EAGLContext.setCurrent(context)
     defer {
       OpenGLESHelpers.checkError("disposeMPV")
@@ -100,6 +104,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
 
     mpv_render_context_set_update_callback(renderContext, nil, nil)
     mpv_render_context_free(renderContext)
+    self.renderContext = nil
   }
 
   public func resize(_ size: CGSize) {
@@ -111,7 +116,7 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func render(_ size: CGSize) {
-    guard size.width.isFinite && size.height.isFinite,
+    guard !disposed, size.width.isFinite && size.height.isFinite,
       size.width > 0 && size.height > 0,
       size.width <= CGFloat(Int32.max) && size.height <= CGFloat(Int32.max)
     else { return }

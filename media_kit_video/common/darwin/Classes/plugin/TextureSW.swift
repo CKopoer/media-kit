@@ -19,6 +19,7 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   private let updateCallback: UpdateCallback
   private var renderContext: OpaquePointer?
   private let frames = CompletedFrameStore<CVPixelBuffer>()
+  private var disposed = false
 
   init(
     handle: OpaquePointer,
@@ -29,12 +30,16 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
 
     super.init()
 
-    DispatchQueue.main.async {
-      self.initMPV()
-    }
+    self.initMPV()
   }
 
   deinit {
+    dispose()
+  }
+
+  public func dispose() {
+    guard !disposed else { return }
+    disposed = true
     disposePixelBuffer()
     disposeMPV()
   }
@@ -47,33 +52,32 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   private func initMPV() {
-    let api = UnsafeMutableRawPointer(
-      mutating: (MPV_RENDER_API_TYPE_SW as NSString).utf8String
-    )
-    var params: [mpv_render_param] = [
-      mpv_render_param(type: MPV_RENDER_PARAM_API_TYPE, data: api),
-      mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
-    ]
-
-    MPVHelpers.checkError(
-      mpv_render_context_create(&renderContext, handle, &params)
-    )
+    MPV_RENDER_API_TYPE_SW.withCString { api in
+      var params: [mpv_render_param] = [
+        mpv_render_param(type: MPV_RENDER_PARAM_API_TYPE,
+                         data: UnsafeMutableRawPointer(mutating: api)),
+        mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
+      ]
+      MPVHelpers.checkError(
+        mpv_render_context_create(&renderContext, handle, &params)
+      )
+    }
 
     mpv_render_context_set_update_callback(
       renderContext,
       { (ctx) in
         let that = unsafeBitCast(ctx, to: TextureSW.self)
-        DispatchQueue.main.async {
-          that.updateCallback()
-        }
+        that.updateCallback()
       },
       UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
     )
   }
 
   private func disposeMPV() {
+    guard let renderContext = renderContext else { return }
     mpv_render_context_set_update_callback(renderContext, nil, nil)
     mpv_render_context_free(renderContext)
+    self.renderContext = nil
   }
 
   public func resize(_ size: CGSize) {
@@ -85,8 +89,11 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func render(_ size: CGSize) {
-    guard size.width > 0 && size.height > 0 else { return }
-    let textureContext = TextureSWContext(size: size)
+    guard !disposed, size.width.isFinite && size.height.isFinite,
+      size.width > 0 && size.height > 0,
+      size.width <= CGFloat(Int32.max) && size.height <= CGFloat(Int32.max),
+      let textureContext = TextureSWContext(size: size)
+    else { return }
     guard CVPixelBufferLockBaseAddress(
       textureContext.pixelBuffer,
       CVPixelBufferLockFlags(rawValue: 0)
@@ -95,32 +102,30 @@ public class TextureSW: NSObject, FlutterTexture, ResizableTextureProtocol {
     var ssize: [Int32] = [Int32(size.width), Int32(size.height)]
     let format: String = "bgr0"
     var pitch: Int = CVPixelBufferGetBytesPerRow(textureContext.pixelBuffer)
-    let buffer = CVPixelBufferGetBaseAddress(textureContext.pixelBuffer)
-
-    // pointers
-    let ssizePtr = ssize.withUnsafeMutableBytes {
-      $0.baseAddress?.assumingMemoryBound(to: Int32.self)
+    guard let buffer = CVPixelBufferGetBaseAddress(textureContext.pixelBuffer) else {
+      CVPixelBufferUnlockBaseAddress(textureContext.pixelBuffer, CVPixelBufferLockFlags(rawValue: 0))
+      return
     }
-    let formatPtr = UnsafeMutablePointer(
-      mutating: (format as NSString).utf8String
-    )
-    let pitchPtr = withUnsafeMutablePointer(to: &pitch) { $0 }
-    let bufferPtr = buffer!.assumingMemoryBound(to: UInt8.self)
-
-    var params: [mpv_render_param] = [
-      mpv_render_param(type: MPV_RENDER_PARAM_SW_SIZE, data: ssizePtr),
-      mpv_render_param(type: MPV_RENDER_PARAM_SW_FORMAT, data: formatPtr),
-      mpv_render_param(type: MPV_RENDER_PARAM_SW_STRIDE, data: pitchPtr),
-      mpv_render_param(type: MPV_RENDER_PARAM_SW_POINTER, data: bufferPtr),
-      mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
-    ]
-
-    mpv_render_context_render(renderContext, &params)
+    let status = ssize.withUnsafeMutableBytes { dimensions in
+      format.withCString { format in
+        withUnsafeMutablePointer(to: &pitch) { pitch in
+          var params: [mpv_render_param] = [
+            mpv_render_param(type: MPV_RENDER_PARAM_SW_SIZE, data: dimensions.baseAddress),
+            mpv_render_param(type: MPV_RENDER_PARAM_SW_FORMAT,
+                             data: UnsafeMutableRawPointer(mutating: format)),
+            mpv_render_param(type: MPV_RENDER_PARAM_SW_STRIDE, data: pitch),
+            mpv_render_param(type: MPV_RENDER_PARAM_SW_POINTER, data: buffer),
+            mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
+          ]
+          return mpv_render_context_render(renderContext, &params)
+        }
+      }
+    }
 
     CVPixelBufferUnlockBaseAddress(
       textureContext.pixelBuffer,
       CVPixelBufferLockFlags(rawValue: 0)
     )
-    frames.publish(textureContext.pixelBuffer)
+    if status >= 0 { frames.publish(textureContext.pixelBuffer) }
   }
 }

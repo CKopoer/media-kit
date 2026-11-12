@@ -7,6 +7,7 @@
 public class VideoOutputManager: NSObject {
   private let registry: FlutterTextureRegistry
   private var videoOutputs = [Int64: VideoOutput]()
+  private var closingOutputs = [Int64: VideoOutput]()
 
   init(registry: FlutterTextureRegistry) {
     self.registry = registry
@@ -44,13 +45,21 @@ public class VideoOutputManager: NSObject {
   }
 
   public func destroy(
-    handle: Int64
+    handle: Int64,
+    completion: @escaping () -> Void
   ) {
-    let videoOutput = self.videoOutputs[handle]
-    if videoOutput == nil {
+    if let closing = closingOutputs[handle] {
+      closing.dispose(completion: completion)
       return
     }
-
-    self.videoOutputs[handle] = nil
+    guard let output = videoOutputs.removeValue(forKey: handle) else {
+      completion()
+      return
+    }
+    closingOutputs[handle] = output
+    output.dispose { [weak self] in
+      self?.closingOutputs.removeValue(forKey: handle)
+      completion()
+    }
   }
 }

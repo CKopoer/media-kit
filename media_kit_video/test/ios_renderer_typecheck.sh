@@ -11,8 +11,14 @@ target=arm64-apple-ios15.0
 make -C "$package_dir/common/darwin" HEADERS_DESTDIR="$scratch_dir/Headers"
 cat > "$scratch_dir/Flutter.swift" <<'SWIFT'
 import CoreVideo
+import Foundation
 public protocol FlutterTexture: AnyObject {
   func copyPixelBuffer() -> Unmanaged<CVPixelBuffer>?
+}
+public protocol FlutterTextureRegistry: AnyObject {
+  func register(_ texture: FlutterTexture) -> Int64
+  func unregisterTexture(_ textureId: Int64)
+  func textureFrameAvailable(_ textureId: Int64)
 }
 SWIFT
 xcrun swiftc -sdk "$sdk_path" -target "$target" -swift-version 5 \
@@ -29,6 +35,10 @@ xcrun swiftc -typecheck -sdk "$sdk_path" -target "$target" -swift-version 5 \
   -I "$scratch_dir" -I "$scratch_dir/Headers" -import-objc-header "$scratch_dir/bridging.h" \
   "$common/ResizableTextureProtocol.swift" "$common/SwappableObjectManager.swift" \
   "$common/MPVHelpers.swift" "$common/MPVVideoOutParams.swift" \
+  "$common/Worker.swift" "$common/SafeResizableTexture.swift" \
+  "$common/TextureSWContext.swift" "$common/TextureSW.swift" \
+  "$common/VideoOutputConfiguration.swift" "$common/VideoOutput.swift" \
+  "$common/VideoOutputManager.swift" \
   "$plugin/gles/OpenGLESHelpers.swift" "$plugin/gles/TextureGLESContext.swift" \
   "$plugin/TextureHW.swift"
 echo 'iOS arm64 renderer typecheck passed with Apple SDK and pinned mpv headers'
