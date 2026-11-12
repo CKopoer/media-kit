@@ -56,9 +56,6 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       EAGLContext.setCurrent(nil)
     }
 
-    let api = UnsafeMutableRawPointer(
-      mutating: (MPV_RENDER_API_TYPE_OPENGL as NSString).utf8String
-    )
     var procAddress = mpv_opengl_init_params(
       get_proc_address: {
         (ctx, name) in
@@ -67,23 +64,20 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
       get_proc_address_ctx: nil
     )
 
-    var params: [mpv_render_param] = withUnsafeMutableBytes(of: &procAddress) {
-      procAddress in
-      return [
-        mpv_render_param(type: MPV_RENDER_PARAM_API_TYPE, data: api),
-        mpv_render_param(
-          type: MPV_RENDER_PARAM_OPENGL_INIT_PARAMS,
-          data: procAddress.baseAddress.map {
-            UnsafeMutableRawPointer($0)
-          }
-        ),
-        mpv_render_param(),
-      ]
+    // All pointers must remain inside their borrowing scopes until C returns.
+    MPV_RENDER_API_TYPE_OPENGL.withCString { api in
+      withUnsafeMutablePointer(to: &procAddress) { address in
+        var params: [mpv_render_param] = [
+          mpv_render_param(type: MPV_RENDER_PARAM_API_TYPE,
+                           data: UnsafeMutableRawPointer(mutating: api)),
+          mpv_render_param(type: MPV_RENDER_PARAM_OPENGL_INIT_PARAMS, data: address),
+          mpv_render_param(),
+        ]
+        MPVHelpers.checkError(
+          mpv_render_context_create(&renderContext, handle, &params)
+        )
+      }
     }
-
-    MPVHelpers.checkError(
-      mpv_render_context_create(&renderContext, handle, &params)
-    )
 
     mpv_render_context_set_update_callback(
       renderContext,
@@ -117,21 +111,27 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
   }
 
   public func render(_ size: CGSize) {
-    guard size.width > 0 && size.height > 0 else { return }
+    guard size.width.isFinite && size.height.isFinite,
+      size.width > 0 && size.height > 0,
+      size.width <= CGFloat(Int32.max) && size.height <= CGFloat(Int32.max)
+    else { return }
+    let previousContext = EAGLContext.current()
+    guard EAGLContext.setCurrent(context) else { return }
+    defer {
+      // Run after the autorelease pool releases the frame's GL wrapper, also
+      // on allocation/FBO failure. Keep cache operations in the owning context.
+      CVOpenGLESTextureCacheFlush(textureCache, 0)
+      OpenGLESHelpers.checkError("render")
+      EAGLContext.setCurrent(previousContext)
+    }
     autoreleasepool {
       // Each published IOSurface is write-once. Three buffers cannot prove that
       // Flutter's Metal queue has finished sampling an older surface.
-      let textureContext = TextureGLESContext(
+      guard let textureContext = TextureGLESContext(
         context: context,
         textureCache: textureCache,
         size: size
-      )
-
-      EAGLContext.setCurrent(context)
-      defer {
-        OpenGLESHelpers.checkError("render")
-        EAGLContext.setCurrent(nil)
-      }
+      ) else { return }
 
       glBindFramebuffer(GLenum(GL_FRAMEBUFFER), textureContext.frameBuffer)
       defer {
@@ -144,23 +144,19 @@ public class TextureHW: NSObject, FlutterTexture, ResizableTextureProtocol {
         h: Int32(size.height),
         internal_format: 0
       )
-      let fboPtr = withUnsafeMutablePointer(to: &fbo) { $0 }
-
-      var params: [mpv_render_param] = [
-        mpv_render_param(type: MPV_RENDER_PARAM_OPENGL_FBO, data: fboPtr),
-        mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
-      ]
-
-      mpv_render_context_render(renderContext, &params)
+      let status = withUnsafeMutablePointer(to: &fbo) { fboPtr in
+        var params: [mpv_render_param] = [
+          mpv_render_param(type: MPV_RENDER_PARAM_OPENGL_FBO, data: fboPtr),
+          mpv_render_param(type: MPV_RENDER_PARAM_INVALID, data: nil),
+        ]
+        return mpv_render_context_render(renderContext, &params)
+      }
+      guard status >= 0 else { return }
 
       // A different graphics API/queue will consume this IOSurface.
       glFinish()
       frames.publish(textureContext.pixelBuffer)
     }
-    // The frame's GL wrappers are gone; do not accumulate CoreVideo cache entries.
-    EAGLContext.setCurrent(context)
-    CVOpenGLESTextureCacheFlush(textureCache, 0)
-    EAGLContext.setCurrent(nil)
   }
 
   static private func getProcAddress(

@@ -1,0 +1,22 @@
+name: iOS video output
+on:
+  push:
+    paths:
+      - 'media_kit_video/ios/**'
+      - 'media_kit_video/test/ios_renderer_typecheck.sh'
+      - '.github/workflows/ios-video-output.yml'
+  pull_request:
+    paths:
+      - 'media_kit_video/ios/**'
+      - 'media_kit_video/test/ios_renderer_typecheck.sh'
+      - '.github/workflows/ios-video-output.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  typecheck:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: bash media_kit_video/test/ios_renderer_typecheck.sh

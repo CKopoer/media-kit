@@ -24,12 +24,14 @@ public class OpenGLESHelpers {
     return textureCache!
   }
 
-  static public func createPixelBuffer(_ size: CGSize) -> CVPixelBuffer {
+  static public func createPixelBuffer(_ size: CGSize) -> CVPixelBuffer? {
     var pixelBuffer: CVPixelBuffer?
 
     let attrs =
       [
-        kCVPixelBufferMetalCompatibilityKey: true
+        kCVPixelBufferMetalCompatibilityKey: true,
+        kCVPixelBufferOpenGLESCompatibilityKey: true,
+        kCVPixelBufferIOSurfacePropertiesKey: [:],
       ] as CFDictionary
 
     let cvret: CVReturn = CVPixelBufferCreate(
@@ -40,16 +42,15 @@ public class OpenGLESHelpers {
       attrs,
       &pixelBuffer
     )
-    assert(cvret == kCVReturnSuccess, "CVPixelBufferCreate")
-
-    return pixelBuffer!
+    guard cvret == kCVReturnSuccess else { return nil }
+    return pixelBuffer
   }
 
   static public func createTexture(
     _ textureCache: CVOpenGLESTextureCache,
     _ pixelBuffer: CVPixelBuffer,
     _ size: CGSize
-  ) -> CVOpenGLESTexture {
+  ) -> CVOpenGLESTexture? {
     var texture: CVOpenGLESTexture?
 
     let cvret: CVReturn = CVOpenGLESTextureCacheCreateTextureFromImage(
@@ -66,15 +67,12 @@ public class OpenGLESHelpers {
       0,
       &texture
     )
-    assert(
-      cvret == kCVReturnSuccess,
-      "CVOpenGLESTextureCacheCreateTextureFromImage"
-    )
-
-    return texture!
+    guard cvret == kCVReturnSuccess else { return nil }
+    return texture
   }
 
   public enum FrameBufferError: Error {
+    case contextUnavailable
     case status(status: GLuint)
   }
 
@@ -83,10 +81,13 @@ public class OpenGLESHelpers {
     texture: CVOpenGLESTexture,
     size: CGSize
   ) throws -> GLuint {
-    EAGLContext.setCurrent(context)
+    let previousContext = EAGLContext.current()
+    guard EAGLContext.setCurrent(context) else {
+      throw FrameBufferError.contextUnavailable
+    }
     defer {
       OpenGLESHelpers.checkError("createFrameBuffer")
-      EAGLContext.setCurrent(nil)
+      EAGLContext.setCurrent(previousContext)
     }
 
     let textureName: GLuint = CVOpenGLESTextureGetName(texture)
@@ -130,40 +131,15 @@ public class OpenGLESHelpers {
     // automatically memory managed
   }
 
-  static public func deletePixeBuffer(
-    _ context: EAGLContext,
-    _ pixelBuffer: CVPixelBuffer
-  ) {
-    // 'CVPixelBufferRelease' is unavailable: Core Foundation objects are
-    // automatically memory managed
-  }
-
-  // BUG: `glDeleteTextures` does not release `CVOpenGLESTexture`.
-  // `CVOpenGLESTextureCache` retains a direct or indirect reference to
-  // `IOSurface`, which causes a memory leak until `CVOpenGLESTextureCache` is
-  // released.
-  static public func deleteTexture(
-    _ context: EAGLContext,
-    _ texture: CVOpenGLESTexture
-  ) {
-    EAGLContext.setCurrent(context)
-    defer {
-      OpenGLESHelpers.checkError("deleteTexture")
-      EAGLContext.setCurrent(nil)
-    }
-
-    var textureName: GLuint = CVOpenGLESTextureGetName(texture)
-    glDeleteTextures(1, &textureName)
-  }
-
   static public func deleteFrameBuffer(
     _ context: EAGLContext,
     _ frameBuffer: GLuint
   ) {
-    EAGLContext.setCurrent(context)
+    let previousContext = EAGLContext.current()
+    guard EAGLContext.setCurrent(context) else { return }
     defer {
       OpenGLESHelpers.checkError("deleteFrameBuffer")
-      EAGLContext.setCurrent(nil)
+      EAGLContext.setCurrent(previousContext)
     }
 
     var frameBuffer = frameBuffer
